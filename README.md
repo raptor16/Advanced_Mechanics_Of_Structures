@@ -1,6 +1,6 @@
 # Advanced_Mechanics_Of_Structures
 
-
+## Truss Calculator (A1) 
 This is written in Python 2.7 -- make sure you have Python 2.7 (not 3.5) if not install it https://www.python.org/download/releases/2.7/ and add where you put Python.exe to the environment variables PATH
 
 Make sure you have the following libraries: 
