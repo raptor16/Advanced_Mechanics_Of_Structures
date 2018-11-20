@@ -220,9 +220,16 @@ def get_mesh_info (local_mesh):
 
     return connec, num_nodes, X, Y, num_elements
 
-def plot_excitation_freq(X, Y):
+def plot_excitation_freq(X, Y, X1, Y1, X2, Y2, X3, Y3):
     plt.ion()
-    plt.semilogy(X, Y)
+    plt.semilogy(X, Y, label="Mesh 1")
+    plt.semilogy(X1, Y1, label="Mesh 2")
+    plt.semilogy(X2, Y2, label="Mesh 3")
+    plt.semilogy(X3, Y3, label="Mesh 4")
+    plt.legend()
+    plt.title("Excitation Frequency ")
+    plt.xlabel("Frequency in Hz")
+    plt.ylabel("u0 in m)")
     plt.pause(1000)
     plt.show()
 
@@ -233,6 +240,9 @@ def main():
     EA = 6.987 * 10**6   # N
     rhoA = 2.74           # kg/m
     x1, y1, x2, y2 = 0, 0, 0, 0
+    dof = 3
+    j = 1j
+    y_offset = 1
 
 
     # Get Mesh1
@@ -260,22 +270,19 @@ def main():
        [K - \omega ^ 2 * M  + j * \omega * C] u_0 = f
                dynamic stiffness matrix
     """
-    dof = 3
-    fshape = (12*dof)
-    f = np.zeros(fshape)
-    y_offset = 1
-    f[2*dof + y_offset] = 1  # Force at node 2 at the y dof is 1
-    reduced_f = f[local_mesh.dof_active]
-    print "reduced_f.shape", reduced_f.shape
 
+    members = connec.shape[0]
+    fshape = (members * dof)
+    f = np.zeros(fshape)
+    P_dof = np.where((X == 1) & (Y == 0))[0][0] * dof + y_offset
+    f[P_dof] = 1  # Force at node 2 at the y dof is 1
+    reduced_f = f[local_mesh.dof_active]
     C = 10.0 * reduced_M
-    j = 1j
 
     Omega_list = np.linspace(0, 250, 250)
     u0_at_R = np.zeros(Omega_list.shape[0])
     R_node = 6
-    R_dof = R_node * dof - 6 + y_offset # minus 6 because there's two nodes that are dead.
-    print "R_dof", R_dof
+    R_dof = R_node * dof - len(local_mesh.dof_restr) + y_offset # minus 6 because there's two nodes that are dead.
 
     # Omega = 250 * 2 * math.pi
     for i in range (Omega_list.shape[0]):
@@ -283,47 +290,135 @@ def main():
         dynamic_stiffness_matrix = reduced_K - Omega ** 2 * reduced_M + j * Omega * C   # 18 x 18
         u0 = np.linalg.solve(dynamic_stiffness_matrix, reduced_f)   # 18 x 1
         u0_at_R[i] = abs(u0[R_dof])
-    print "u0_at_R", u0_at_R
-    plot_excitation_freq(Omega_list, u0_at_R)
-    # Find the u0 at R_dof and plot it against the frequencies from 0 to 250.
-    # Then plot u0_at_R against the frequencies.
-
-
-
-    # Get Mesh2
-    connec, num_nodes, X, Y, e = get_mesh_info(mesh.Mesh2)
-    shape = (e, 6, 6)  # 6x6 mass matrix for e elements
-    m_e = np.empty(shape)
-    k_e = np.empty(shape)
-    for i in range(e):
-        node1 = connec[i][0]
-        node2 = connec[i][1]
-        m_e[i] = element_mass_matrix(rhoA, X[node1], Y[node1], X[node2], Y[node2])
-        k_e[i] = element_stiffness(EA, EI, X[node1], Y[node1], X[node2], Y[node2])
-    M = assembly(m_e, connec, num_nodes)
-    K = assembly(k_e, connec, num_nodes)
-    eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, mesh.Mesh2)
-
 
 
     # Get Mesh3
-    connec, num_nodes, X, Y, e = get_mesh_info(mesh.Mesh3)
-    shape = (e, 6, 6)  # 6x6 mass matrix for e elements
-    m_e = np.empty(shape)
-    k_e = np.empty(shape)
-    for i in range(e):
-        node1 = connec[i][0]
-        node2 = connec[i][1]
-        m_e[i] = element_mass_matrix(rhoA, X[node1], Y[node1], X[node2], Y[node2])
-        k_e[i] = element_stiffness(EA, EI, X[node1], Y[node1], X[node2], Y[node2])
-    M = assembly(m_e, connec, num_nodes)
-    K = assembly(k_e, connec, num_nodes)
-    eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, mesh.Mesh3)
+    local_mesh = mesh.Mesh3
+    connec2, num_nodes2, X2, Y2, e2 = get_mesh_info(local_mesh)
+    shape2 = (e2, 6, 6)  # 6x6 mass matrix for e elements
+    m_e2 = np.empty(shape2)
+    k_e2 = np.empty(shape2)
+    for i in range(e2):
+        node1 = connec2[i][0]
+        node2 = connec2[i][1]
+        m_e2[i] = element_mass_matrix(rhoA, X2[node1], Y2[node1], X2[node2], Y2[node2])
+        k_e2[i] = element_stiffness(EA, EI, X2[node1], Y2[node1], X2[node2], Y2[node2])
+    M2 = assembly(m_e2, connec2, num_nodes2)
+    K2 = assembly(k_e2, connec2, num_nodes2)
+    eigval2, eigvec2, omega2, hertz2, reduced_M2, reduced_K2 = free_vibration(M2, K2, local_mesh)
+    print "hertz2", hertz2
+    # PART 3A
+    members2 = connec2.shape[0]
+    fshape2 = (members2 * dof)
+    f2 = np.zeros(fshape2)
+    P_dof2 = np.where((X2 == 1) & (Y2 == 0))[0][0] * dof + y_offset
+    f2[P_dof2] = 1  # Force at node 2 at the y dof is 1
+    reduced_f2 = f2[local_mesh.dof_active]
+
+    C2 = 10.0 * reduced_M2
+
+    Omega_list2 = np.linspace(0, 250, 250)
+    u0_at_R2 = np.zeros(Omega_list2.shape[0])
+
+    R_dof2 = np.where((X2 == 3) & (Y2 == 0))[0][0] * dof - len(local_mesh.dof_restr) + y_offset
+    print "R_dof2", R_dof2
+    # Omega = 250 * 2 * math.pi
+    for i in range(Omega_list2.shape[0]):
+        Omega2 = Omega_list2[i] * 2 * math.pi  # Convert to Radians
+        dynamic_stiffness_matrix2 = reduced_K2 - Omega2 ** 2 * reduced_M2 + j * Omega2 * C2  # 18 x 18
+        u02 = np.linalg.solve(dynamic_stiffness_matrix2, reduced_f2)  # 18 x 1
+        u0_at_R2[i] = abs(u02[R_dof2])
+    print "u0_at_R2", u0_at_R2
+    ### END MESH 3
 
 
 
+    ###### MESH 2
+    local_mesh = mesh.Mesh2
+    connec1, num_nodes1, X1, Y1, e1 = get_mesh_info(local_mesh)
+    shape1 = (e1, 6, 6)  # 6x6 mass matrix for e elements
+    m_e1 = np.empty(shape1)
+    k_e1 = np.empty(shape1)
+    for i in range(e1):
+        node1 = connec1[i][0]
+        node2 = connec1[i][1]
+        m_e1[i] = element_mass_matrix(rhoA, X1[node1], Y1[node1], X1[node2], Y1[node2])
+        k_e1[i] = element_stiffness(EA, EI, X1[node1], Y1[node1], X1[node2], Y1[node2])
+    M1 = assembly(m_e1, connec1, num_nodes1)
+    K1 = assembly(k_e1, connec1, num_nodes1)
+    eigval1, eigvec1, omega1, hertz1, reduced_M1, reduced_K1 = free_vibration(M1, K1, local_mesh)
+    print "hertz1", hertz1
+    # PART 3A
+    members1 = connec1.shape[0]
+    fshape1 = (members1 * dof)
+    f1 = np.zeros(fshape1)
+    P_dof1 = np.where((X1 == 1) & (Y1 == 0))[0][0] * dof + y_offset
+    f1[P_dof1] = 1  # Force at node 2 at the y dof is 1
+    reduced_f1 = f1[local_mesh.dof_active]
+
+    C1 = 10.0 * reduced_M1
+
+    Omega_list1 = np.linspace(0, 250, 250)
+    u0_at_R1 = np.zeros(Omega_list1.shape[0])
+
+    R_dof1 = np.where((X1 == 3) & (Y1 == 0))[0][0] * dof - len(local_mesh.dof_restr) + y_offset
+    print "R_dof1", R_dof1
+    # Omega = 250 * 2 * math.pi
+    for i in range(Omega_list1.shape[0]):
+        Omega1 = Omega_list1[i] * 2 * math.pi  # Convert to Radians
+        dynamic_stiffness_matrix1 = reduced_K1 - Omega1 ** 2 * reduced_M1 + j * Omega1 * C1  # 18 x 18
+        u01 = np.linalg.solve(dynamic_stiffness_matrix1, reduced_f1)  # 18 x 1
+        u0_at_R1[i] = abs(u01[R_dof1])
+    print "u0_at_R1", u0_at_R1
+    ### END MESH 2
+
+    ###### MESH 4
+    local_mesh = mesh.Mesh4
+    connec4, num_nodes4, X4, Y4, e4 = get_mesh_info(local_mesh)
+    shape4 = (e4, 6, 6)  # 6x6 mass matrix for e elements
+    m_e4 = np.empty(shape4)
+    k_e4 = np.empty(shape4)
+    for i in range(e4):
+        node1 = connec4[i][0]
+        node2 = connec4[i][1]
+        m_e4[i] = element_mass_matrix(rhoA, X4[node1], Y4[node1], X4[node2], Y4[node2])
+        k_e4[i] = element_stiffness(EA, EI, X4[node1], Y4[node1], X4[node2], Y4[node2])
+    M4 = assembly(m_e4, connec4, num_nodes4)
+    K4 = assembly(k_e4, connec4, num_nodes4)
+    eigval4, eigvec4, omega4, hertz4, reduced_M4, reduced_K4 = free_vibration(M4, K4, local_mesh)
+    print "hertz4", hertz4
+    # PART 3A
+    members4 = connec4.shape[0]
+    fshape4 = (members4 * dof)
+    f4 = np.zeros(fshape4)
+    P_dof4 = np.where((X4 == 1) & (Y4 == 0))[0][0] * dof + y_offset
+    f4[P_dof4] = 1  # Force at node 2 at the y dof is 1
+    reduced_f4 = f4[local_mesh.dof_active]
+
+    C4 = 10.0 * reduced_M4
+
+    Omega_list4 = np.linspace(0, 250, 250)
+    u0_at_R4 = np.zeros(Omega_list4.shape[0])
+
+    R_dof4 = np.where((X4 == 3) & (Y4 == 0))[0][0] * dof - len(local_mesh.dof_restr) + y_offset
+
+    for i in range(Omega_list4.shape[0]):
+        Omega4 = Omega_list4[i] * 2 * math.pi  # Convert to Radians
+        dynamic_stiffness_matrix4 = reduced_K4 - Omega4 ** 2 * reduced_M4 + j * Omega4 * C4  # 18 x 18
+        u04 = np.linalg.solve(dynamic_stiffness_matrix4, reduced_f4)  # 18 x 1
+        u0_at_R4[i] = abs(u04[R_dof4])
+    print "u0_at_R4", u0_at_R4
+    ### END MESH 4
+    print "pdof0", P_dof
+    print "pdof1", P_dof1
+    print "pdof2", P_dof2
+    print "pdof4", P_dof4
+    plot_excitation_freq(Omega_list, u0_at_R, Omega_list1, u0_at_R1, Omega_list, u0_at_R2, Omega_list1, u0_at_R4)
+
+    """
     # Get Mesh4
-    connec, num_nodes, X, Y, e = get_mesh_info(mesh.Mesh4)
+    local_mesh = mesh.Mesh4
+    connec, num_nodes, X, Y, e = get_mesh_info(local_mesh)
     shape = (e, 6, 6)  # 6x6 mass matrix for e elements
     m_e = np.empty(shape)
     k_e = np.empty(shape)
@@ -334,8 +429,8 @@ def main():
         k_e[i] = element_stiffness(EA, EI, X[node1], Y[node1], X[node2], Y[node2])
     M = assembly(m_e, connec, num_nodes)
     K = assembly(k_e, connec, num_nodes)
-    eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, mesh.Mesh4)
-
+    eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, local_mesh)
+    """
 
     #plot_mode_shape(eigvec)
 
