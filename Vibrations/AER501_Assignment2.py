@@ -233,6 +233,15 @@ def plot_excitation_freq(X, Y, X1, Y1, X2, Y2, X3, Y3):
     plt.pause(1000)
     plt.show()
 
+def plot_modal (X, Y):
+    plt.ion()
+    plt.plot(X, Y, label="Mesh 1")
+    plt.legend()
+    plt.title("Modal")
+    plt.xlabel("Frequency in Hz")
+    plt.ylabel("u0 in m)")
+    plt.pause(1000)
+    plt.show()
 
 def main():
     L = 1               # unit: m
@@ -265,7 +274,7 @@ def main():
     eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, local_mesh)
     print "hertz", hertz
 
-    # QUESTION 3
+    # QUESTION 3 A
     """
        [K - \omega ^ 2 * M  + j * \omega * C] u_0 = f
                dynamic stiffness matrix
@@ -291,7 +300,31 @@ def main():
         u0 = np.linalg.solve(dynamic_stiffness_matrix, reduced_f)   # 18 x 1
         u0_at_R[i] = abs(u0[R_dof])
 
+    # Question 3 B
+    gamma2 = 10
+    print "eigvec.shape", eigvec.shape
+    print "reduced_f.shape", reduced_f.shape
+    num_of_eig = len(omega)
+    num_of_omega = len(Omega_list)
+    q_shape = (num_of_omega, num_of_eig)
+    # q = np.empty(q_shape)
+    u0_modal = np.empty(q_shape)
+    for k in range(len(Omega_list)):
+        for i in range(num_of_eig):
+            Omega = Omega_list[k] * 2 * math.pi # Convert to Radians
+            # tmp = np.reshape(eigvec[i], (18, 1))
+            u0_modal[k] = abs(np.dot(eigvec[i], reduced_f) / abs((eigval[i] - Omega**2 + j*Omega * gamma2))) * eigvec[i]
+            # denominator = abs()  # gamma1 is zero
+            # q[k][i] = numerator / denominator
+            # u0_modal[k] += q[k][i] * eigvec[i]
+    print "u0_modal", u0_modal
 
+    u_plot = np.empty(num_of_omega)
+    for i in range(num_of_omega):
+        u_plot[i] = u0_modal[i][R_dof]
+    plot_modal(Omega_list, u_plot)
+
+    """
     # Get Mesh3
     local_mesh = mesh.Mesh3
     connec2, num_nodes2, X2, Y2, e2 = get_mesh_info(local_mesh)
@@ -413,28 +446,10 @@ def main():
     print "pdof1", P_dof1
     print "pdof2", P_dof2
     print "pdof4", P_dof4
-    plot_excitation_freq(Omega_list, u0_at_R, Omega_list1, u0_at_R1, Omega_list, u0_at_R2, Omega_list1, u0_at_R4)
-
+    plot_excitation_freq(Omega_list, u0_at_R, Omega_list1, u0_at_R1, Omega_list, u0_at_R2, Omega_list1, u0_at_R4)    
     """
-    # Get Mesh4
-    local_mesh = mesh.Mesh4
-    connec, num_nodes, X, Y, e = get_mesh_info(local_mesh)
-    shape = (e, 6, 6)  # 6x6 mass matrix for e elements
-    m_e = np.empty(shape)
-    k_e = np.empty(shape)
-    for i in range(e):
-        node1 = connec[i][0]
-        node2 = connec[i][1]
-        m_e[i] = element_mass_matrix(rhoA, X[node1], Y[node1], X[node2], Y[node2])
-        k_e[i] = element_stiffness(EA, EI, X[node1], Y[node1], X[node2], Y[node2])
-    M = assembly(m_e, connec, num_nodes)
-    K = assembly(k_e, connec, num_nodes)
-    eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, local_mesh)
-    """
-
     #plot_mode_shape(eigvec)
 
-    # ^^ RINSE WASH REPEAT FOR THE REST OF THE MESHES ^^
 
 
 
