@@ -18,9 +18,6 @@ def calculate_mass_matrix(rhoA, L):
 def calculate_stiffness_matrix(EA, L):
     # convert to floats just in case the inputs aren't floats.
 
-    print "EA", EA
-    print "L", L
-
     EA, L = float(EA), float(L)
 
     mat = np.array([[1, -1],
@@ -60,16 +57,26 @@ def assembler(list_of_matrix, connec_mat, num_nodes):
 def eigensolver(M, K):
     # K \phi = \lambda M \phi ; \lamda is the eigenvalues and \phi is the eigenvectors
     eigval, eigvec = eigh(K, M, eigvals_only=False)
-    print "eigval", eigval
-    print "eigvec", eigvec
-    print "nat freq.", eigval**0.5
     omega = eigval ** 0.5
     # eigenvalues are the sqaure of natural frequencies and eigenvectors are the mode shape
 
     return eigval, eigvec, omega
 
 
+def connec_generator(elements, L=1):
+    num_nodes = elements + 1
+    l_e = float(L) / float(elements)
+    shape = (elements, 2)
+    connec_mat = np.empty(shape, dtype=int)
+
+    for i in range (connec_mat.shape[0]):
+        for j in range (connec_mat.shape[1]):
+            connec_mat[i][j] = int(i + j)
+    return connec_mat, num_nodes, l_e
+
+
 def plot_frequency(nat_freq, f1, f2, f3, f4):
+
     n = nat_freq.shape[0]
     x = np.linspace(0, n, n)
 
@@ -86,33 +93,76 @@ def plot_frequency(nat_freq, f1, f2, f3, f4):
     x4 = np.linspace(0, n4, n4)
 
     plt.ion()
-    plt.plot(x, nat_freq)
-    plt.plot(x1, f1)
-    plt.plot(x2, f2)
-    plt.plot(x3, f3)
-    plt.plot(x4, f4)
+    plt.figure()
+    plt.plot(x, nat_freq, label="5 elements")
+    plt.plot(x1, f1, label="10 elements")
+    plt.plot(x2, f2, label="30 elements")
+    plt.plot(x3, f3, label="60 elements")
+    plt.plot(x4, f4, label="100 elements")
+    plt.legend()
+    plt.title("Natural Frequency vs. Frequency Mode")
+    plt.xlabel("Frequency Modes")
+    plt.ylabel("Natural frequency in Hz")
     plt.pause(2000)
     plt.show()
 
-    """
-    plt.ion()
-
-    plt.axis([0,50,60,80])
-    for i in np.arange(1,5):
-        z = 68 + 4 * np.random.randn(50)
-        zm = np.cumsum(z) / range(1,len(z)+1)
-        plt.plot(zm)
-
-    n = np.arange(1,51)
-    su = 68 + 4 / np.sqrt(n)
-    sl = 68 - 4 / np.sqrt(n)
-
-    plt.plot(n,su,n,sl)
-    plt.pause(1000)
-
-    plt.show()
-    """
     print "done"
+
+
+def plot_mode_shape(elements, eigvec, eigvec1, eigvec2, eigvec3, eigvec4, L=1):
+
+    x = np.linspace(0, 1, elements[0])
+    x1 = np.linspace(0, 1, elements[1])
+    x2 = np.linspace(0, 1, elements[2])
+    x3 = np.linspace(0, 1, elements[3])
+    x4 = np.linspace(0, 1, elements[4])
+    """
+    for j = 1:5
+        plot(linspace(0,1,num_elements(i)), eig_vectors(:,j));
+    end
+    """
+
+
+
+    plt.ion()
+    plt.figure()
+    for i in range (len(elements)):
+        plt.plot(x, eigvec[:, i], label="Eigenvector "+str(i))
+        plt.title("Mode Shape for N=6")
+        plt.xlabel("Length of rod in m")
+        plt.ylabel("Shape Function at Node m")
+        plt.legend()
+    plt.figure()
+    for i in range(len(elements)):
+        plt.plot(x1, eigvec1[:, i], label="Eigenvector " + str(i))
+        plt.title("Mode Shape for N=11")
+        plt.xlabel("Length of rod in m")
+        plt.ylabel("Shape Function at Node m")
+        plt.legend()
+    plt.figure()
+    for i in range(len(elements)):
+        plt.plot(x2, eigvec2[:, i], label="Eigenvector " + str(i))
+        plt.title("Mode Shape for N=31")
+        plt.xlabel("Length of rod in m")
+        plt.ylabel("Shape Function at Node m")
+        plt.legend()
+    plt.figure()
+    for i in range(len(elements)):
+        plt.plot(x3, eigvec3[:, i], label="Eigenvector " + str(i))
+        plt.title("Mode Shape for N=61")
+        plt.xlabel("Length of rod in m")
+        plt.ylabel("Shape Function at Node m")
+        plt.legend()
+    plt.figure()
+    for i in range(len(elements)):
+        plt.plot(x4, eigvec4[:, i], label="Eigenvector " + str(i))
+        plt.title("Mode Shape for N=101")
+        plt.xlabel("Length of rod in m")
+        plt.ylabel("Shape Function at Node m")
+        plt.legend()
+
+    plt.pause(1000)
+    plt.show()
 
 
 def main(rhoA=1, EA=1, L=1.):
@@ -133,61 +183,22 @@ def main(rhoA=1, EA=1, L=1.):
     """
     # TODO: Use classes for each mesh.
 
+    elements = [5, 10, 30, 60, 100]
+
     # Mesh 0
-    elements = 5
-    num_nodes = 6
-    l_e = float(L)/float(elements)
-    connec_mat = np.array([[0, 1],
-                           [1, 2],
-                           [2, 3],
-                           [3, 4],
-                           [4, 5]])
+    connec_mat, num_nodes, l_e = connec_generator(elements[0], L)
+
     # Mesh 1
-    elements1 = 6
-    num_nodes1 = 7
-    l_e1 = float(L) / float(elements1)
-    connec_mat1 = np.array([[0, 1],
-                            [1, 2],
-                            [2, 3],
-                            [3, 4],
-                            [4, 5],
-                            [5, 6]])
+    connec_mat1, num_nodes1, l_e1 = connec_generator(elements[1], L)
+
     # Mesh 2
-    elements2 = 7
-    num_nodes2 = 8
-    l_e2 = float(L) / float(elements2)
-    connec_mat2 = np.array([[0, 1],
-                            [1, 2],
-                            [2, 3],
-                            [3, 4],
-                            [4, 5],
-                            [5, 6],
-                            [6, 7]])
+    connec_mat2, num_nodes2, l_e2 = connec_generator(elements[2], L)
+
     # Mesh 3
-    elements3 = 8
-    num_nodes3 = 9
-    l_e3 = float(L) / float(elements3)
-    connec_mat3 = np.array([[0, 1],
-                            [1, 2],
-                            [2, 3],
-                            [3, 4],
-                            [4, 5],
-                            [5, 6],
-                            [6, 7],
-                            [7, 8]])
+    connec_mat3, num_nodes3, l_e3 = connec_generator(elements[3], L)
+
     # Mesh 4
-    elements4 = 9
-    num_nodes4 = 10
-    l_e4 = float(L) / float(elements4)
-    connec_mat4 = np.array([[0, 1],
-                            [1, 2],
-                            [2, 3],
-                            [3, 4],
-                            [4, 5],
-                            [5, 6],
-                            [6, 7],
-                            [7, 8],
-                            [8, 9]])
+    connec_mat4, num_nodes4, l_e4 = connec_generator(elements[4], L)
 
     # since rhoA and l_e is the same for each element then we only need to run calculate_mass_matrix once
     m = calculate_mass_matrix(rhoA, l_e)        # 2x2 mass matrix
@@ -203,14 +214,14 @@ def main(rhoA=1, EA=1, L=1.):
     m4 = calculate_mass_matrix(rhoA, l_e4)
     k4 = calculate_stiffness_matrix(EA, l_e4)
 
-    shape = (elements, 2, 2)
+    shape = (elements[0], 2, 2)
     list_of_M = np.empty(shape)
     list_of_K = np.empty(shape)
 
-    shape1 = (elements1, 2, 2)
-    shape2 = (elements2, 2, 2)
-    shape3 = (elements3, 2, 2)
-    shape4 = (elements4, 2, 2)
+    shape1 = (elements[1], 2, 2)
+    shape2 = (elements[2], 2, 2)
+    shape3 = (elements[3], 2, 2)
+    shape4 = (elements[4], 2, 2)
 
     list_of_M1 = np.empty(shape1)
     list_of_K1 = np.empty(shape1)
@@ -221,26 +232,25 @@ def main(rhoA=1, EA=1, L=1.):
     list_of_M4 = np.empty(shape4)
     list_of_K4 = np.empty(shape4)
 
-    for i in range(elements):
+    for i in range(elements[0]):
         list_of_M[i] = m
         list_of_K[i] = k
 
-    for i in range(elements1):
+    for i in range(elements[1]):
         list_of_M1[i] = m1
         list_of_K1[i] = k1
 
-    for i in range(elements2):
+    for i in range(elements[2]):
         list_of_M2[i] = m2
         list_of_K2[i] = k2
 
-    for i in range(elements3):
+    for i in range(elements[3]):
         list_of_M3[i] = m3
         list_of_K3[i] = k3
 
-    for i in range(elements4):
+    for i in range(elements[4]):
         list_of_M4[i] = m4
         list_of_K4[i] = k4
-    print "list_of_M1", list_of_M1
 
     """
       node1 node2
@@ -284,8 +294,6 @@ def main(rhoA=1, EA=1, L=1.):
     M4 = assembler(list_of_M4, connec_mat4, num_nodes4)
     K4 = assembler(list_of_K4, connec_mat4, num_nodes4)
 
-    print "M1", M1
-
     eigval, eigvec, omega = eigensolver(M[1:, 1:], K[1:, 1:])
 
     eigval1, eigvec1, omega1 = eigensolver(M1[1:, 1:], K1[1:, 1:])
@@ -301,16 +309,18 @@ def main(rhoA=1, EA=1, L=1.):
     nat_freq_hertz3 = omega3 / (2 * math.pi)
     nat_freq_hertz4 = omega4 / (2 * math.pi)
 
-    print "nat_freq_hertz", nat_freq_hertz
-    print "nat_freq_hertz1", nat_freq_hertz1
-    print "nat_freq_hertz2", nat_freq_hertz2
-    print "nat_freq_hertz3", nat_freq_hertz3
-    print "nat_freq_hertz4", nat_freq_hertz4
+    print "nat_freq_hertz first 5", nat_freq_hertz[0:5]
+    print "nat_freq_hertz1", nat_freq_hertz1[0:5]
+    print "nat_freq_hertz2", nat_freq_hertz2[0:5]
+    print "nat_freq_hertz3", nat_freq_hertz3[0:5]
+    print "nat_freq_hertz4", nat_freq_hertz4[0:5]
 
-    plot_frequency(nat_freq_hertz, nat_freq_hertz1, nat_freq_hertz2, nat_freq_hertz3, nat_freq_hertz4)
+    plot_frequency(nat_freq_hertz, nat_freq_hertz1[0:5], nat_freq_hertz2[0:5], nat_freq_hertz3[0:5], nat_freq_hertz4[0:5])
+    plot_mode_shape(elements, eigvec, eigvec1, eigvec2, eigvec3, eigvec4)
 
 
 if __name__ == '__main__':
+    connec_generator(5, 1)
     EA = 6.987 * 10**6   # N
     rhoA = 2.74         # kg/m
     L = 1               # m

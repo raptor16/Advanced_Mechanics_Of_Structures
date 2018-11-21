@@ -194,30 +194,29 @@ def direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, red
         u0 = np.linalg.solve(dynamic_stiffness_matrix, reduced_f)  # 18 x 1
         u0_at_R[i] = abs(u0[R_dof])
 
-    return u0_at_R, reduced_f, R_dof
+    return u0_at_R, reduced_f, R_dof, u0[R_dof]
 
-def modal_freq_analyis(eigvec, eigval, reduced_f, R_dof, Omega_list):
+def modal_freq_analyis(eigvec, eigval, reduced_f, Omega_list, m):
     """
     Calculates frequency response using modal analysis approach.
     :return:
     """
     # Question 3 B
+    num_of_eig = len(eigval)
     gamma2 = 10
     j = 1j
-    num_of_eig = len(eigval)
     num_of_omega = len(Omega_list)
     q_shape = (num_of_omega, num_of_eig)
     u0_modal = np.zeros(q_shape, dtype=complex)
-    print "eigvec", eigvec.shape
 
     for k in range(len(Omega_list)):
-        for i in range(num_of_eig):
+        for i in range(m):
             Omega = Omega_list[k] * 2 * math.pi  # Convert to Radians
             q_at_Omega = np.dot(eigvec[:, i], reduced_f) / (eigval[i] - Omega**2 + j* Omega * gamma2)
             u0_modal[k] = np.add(u0_modal[k], q_at_Omega * eigvec[:, i])
     # plot_modal(Omega_list, u0)
-    u0_modal = np.absolute(u0_modal)
-    plot_modal(Omega_list, u0_modal[:, R_dof])
+    u0_modal_abs = np.absolute(u0_modal)
+    return u0_modal_abs, u0_modal
 
 
 def get_mesh_info (local_mesh):
@@ -269,15 +268,92 @@ def plot_excitation_freq(X, Y, Y1, Y2, Y3):
     plt.pause(1000)
     plt.show()
 
-def plot_modal (X, Y):
+def plot_modal (X, Y, Y1, Y2, Y3, Y4):
     plt.ion()
-    plt.semilogy(X, Y, label="Mesh 4")
+    plt.semilogy(X, Y, label="M=126")
+    plt.semilogy(X, Y1, label="M=20")
+    plt.semilogy(X, Y2, label="M=10")
+    plt.semilogy(X, Y3, label="M=5")
+    plt.semilogy(X, Y4, label="M=3")
+
     plt.legend()
     plt.title("Modal Analysis")
     plt.xlabel("Frequency in Hz")
     plt.ylabel("u0 in m)")
     plt.pause(1000)
     plt.show()
+
+
+def plot_error (X, Y_direct, Y, Y1, Y2, Y3, Y4):
+    diff = np.absolute(Y_direct - Y)
+    diff1 = np.absolute(Y_direct - Y1)
+    diff2 = np.absolute(Y_direct - Y2)
+    diff3 = np.absolute(Y_direct - Y3)
+    diff4 = np.absolute(Y_direct - Y4)
+    plt.ion()
+    plt.semilogy(X, diff, label="M=126")
+    plt.semilogy(X, diff1, label="M=20")
+    plt.semilogy(X, diff2, label="M=10")
+    plt.semilogy(X, diff3, label="M=5")
+    plt.semilogy(X, diff4, label="M=3")
+
+    plt.legend()
+    plt.title("Error Analysis")
+    plt.ylabel("Error between Direct and Modal Analysis for Mode Shapes)")
+    plt.xlabel("Frequency in Hz")
+    plt.pause(1000)
+    plt.show()
+
+
+def bonus(eigvec, reduced_f, K_reduced, eigval):
+    # delu = SUM_1_N { 1/eig(i) * eig * eigT * f } - SUM_1_M{  1/eig(i) * eig * eigT * f }  m is mode
+    # delu = inv(Kr)*f0r - ...
+    #     phi(:,1:nmodes)*inv(diag((2*pi.*w(1:nmodes)).^2))*phi(:,1:nmodes)'*f0r;
+    modes = 15
+    Lambda = np.diag(eigval[:modes])
+    print "shape np.linalg.inv(K_reduced) ", np.linalg.inv(K_reduced).shape
+    print "reduced_f", reduced_f.shape
+    print "eigvec[:, :modes]", eigvec[:, :modes].shape
+    print "Lambda", Lambda
+    delu = np.matmul(np.linalg.inv(K_reduced), reduced_f) - np.matmul(np.matmul(
+        np.matmul(eigvec[:, :modes], np.linalg.inv(Lambda)), np.transpose(eigvec[:, :modes])), reduced_f)
+    print "delu", delu
+    print "delu shape", delu.shape
+
+    return delu
+
+
+def plot_bonus(Omega_list, u0_at_R, u0_modal, delu):
+    print "new delu", delu.shape
+    plt.ion()
+    plt.figure()
+    plt.semilogy(Omega_list, u0_at_R, label="Direct")
+    print "u0_at_R", u0_at_R.shape
+    plt.semilogy(Omega_list, u0_modal, label="Modal")
+    print "u0_modal", u0_modal.shape
+    plt.semilogy(Omega_list, u0_modal + delu, label="Modal with added Delta u")
+    plt.xlabel("Excitation frequency in Hz")
+    plt.ylabel("Mode Shapes")
+    plt.title("(Quasi-static Correction for Frequency Response Analysis (Bonus)")
+    plt.legend()
+    plt.pause(1000)
+    plt.show()
+    """
+    figure; % create new figure
+    dof_offset = 3*length(find(constr_node < nodeR)); % shift due to reduction
+    
+    % Plot direct solution, modal solution, and modal solution with correction
+    semilogy(omega/(2*pi), abs(u0d(3*nodeR-1-dof_offset,:)), ...
+             omega/(2*pi), abs(u0m(3*nodeR-1-dof_offset,:)), ...
+             omega/(2*pi), abs(u0m(3*nodeR-1-dof_offset,:) + ...
+             delu(3*nodeR-1-dof_offset)));
+    
+    legend('Mesh4 - Direct', 'Mesh4 - Modal', 'Mesh4 - Modal with Q-S')
+    xlabel('Excitation Frequency (Hz)')
+    ylabel('Frequency Response')
+    """
+    return NotImplemented
+
 
 def main():
     EI = 1.286 * 10**4   # Nm^2
@@ -308,7 +384,7 @@ def main():
     eigval, eigvec, omega, hertz, reduced_M, reduced_K = free_vibration(M, K, local_mesh)
     print "Mesh 1 Frequencies in Hz, first 12", hertz[0:12]
 
-    u0_at_R, _, _ = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
+    u0_at_R, _, _, _ = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
     ### END MESH 1 ###
 
     ### MESH 2 ###
@@ -327,7 +403,7 @@ def main():
     eigval1, eigvec1, omega1, hertz1, reduced_M, reduced_K = free_vibration(M1, K1, local_mesh)
     print "Mesh 2 Frequencies in Hz, first 12", hertz1[0:12]
 
-    u0_at_R1, _, _ = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
+    u0_at_R1, _, _, _ = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
 
 
     ### END MESH 2
@@ -350,7 +426,7 @@ def main():
     eigval2, eigvec2, omega2, hertz2, reduced_M, reduced_K = free_vibration(M2, K2, local_mesh)
     print "Mesh 3 Frequencies in Hz, first 12", hertz2[0:12]
 
-    u0_at_R2, _, _ = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
+    u0_at_R2, _, _, _ = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
     ### END MESH 3
 
 
@@ -369,19 +445,35 @@ def main():
     K4 = assembly(k_e4, connec4, num_nodes4)
     eigval4, eigvec4, omega4, hertz4, reduced_M, reduced_K = free_vibration(M4, K4, local_mesh)
     print "Mesh 4 Frequencies in Hz, first 12", hertz4[0:12]
-    u0_at_R4, reduced_f, R_dof = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
-    modal_freq_analyis(eigvec4, eigval4, reduced_f, R_dof, Omega_list)
-
+    u0_at_R4, reduced_f, R_dof, u0_at_R4_not_abs = direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list)
+    m = [len(eigval4), 20, 10, 5, 3, 15]
+    u0_modal_M_full, u0_modal_M_full_not_abs  = modal_freq_analyis(eigvec4, eigval4, reduced_f, Omega_list, m[0])
+    u0_modal_M1, u0_modal_M1_not_abs = modal_freq_analyis(eigvec4, eigval4, reduced_f, Omega_list, m[1])
+    u0_modal_M2, u0_modal_M2_not_abs = modal_freq_analyis(eigvec4, eigval4, reduced_f, Omega_list, m[2])
+    u0_modal_M3, u0_modal_M3_not_abs = modal_freq_analyis(eigvec4, eigval4, reduced_f, Omega_list, m[3])
+    u0_modal_M4, u0_modal_M4_not_abs = modal_freq_analyis(eigvec4, eigval4, reduced_f, Omega_list, m[4])
+    u0_modal_M5, u0_modal_M5_not_abs = modal_freq_analyis(eigvec4, eigval4, reduced_f, Omega_list, m[5])
     ### END MESH 4 ###
 
 
     # Q2
-    plot_natural_freq(hertz, hertz1, hertz2, hertz4)
-    # Q3
-    plot_excitation_freq(Omega_list, u0_at_R, u0_at_R1, u0_at_R2, u0_at_R4)
+    plot_natural_freq(hertz[0:12], hertz1[0:12], hertz2[0:12], hertz4[0:12])
     # plot_mode_shape(eigvec, eigvec1, eigvec2, eigvec4) # Looks pretty but is absolutely useless.
+    print "Eigenvector (Mode Shape) for Mesh 1: ", eigvec[:, 12]
+    print "Eigenvector (Mode Shape) for Mesh 2: ", eigvec1[:, 12]
+    print "Eigenvector (Mode Shape) for Mesh 3: ", eigvec2[:, 12]
+    print "Eigenvector (Mode Shape) for Mesh 4: ", eigvec4[:, 12]
 
-
+    # Q3A
+    plot_excitation_freq(Omega_list, u0_at_R, u0_at_R1, u0_at_R2, u0_at_R4)
+    # Q3B
+    plot_modal(Omega_list, u0_modal_M_full[:, R_dof], u0_modal_M1[:, R_dof], u0_modal_M2[:, R_dof],
+               u0_modal_M3[:, R_dof], u0_modal_M4[:, R_dof])
+    plot_error(Omega_list, u0_at_R4_not_abs, u0_modal_M_full_not_abs[:, R_dof], u0_modal_M1_not_abs[:, R_dof], u0_modal_M2_not_abs[:, R_dof],
+               u0_modal_M3_not_abs[:, R_dof], u0_modal_M4_not_abs[:, R_dof])
+    # BONUS
+    delu = bonus(eigvec4, reduced_f, reduced_K, eigval4)
+    plot_bonus(Omega_list, u0_at_R4, u0_modal_M5[:, R_dof], delu[R_dof])
 
 """
 Part A
