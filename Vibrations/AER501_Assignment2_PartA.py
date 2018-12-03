@@ -4,6 +4,12 @@ from scipy.linalg import eigh
 import matplotlib.pyplot as plt
 
 def calculate_mass_matrix(rhoA, L):
+    """
+    Calculates the mass matrix
+    :param rhoA:
+    :param L:
+    :return: mass matrix element
+    """
     # convert to floats just in case the inputs aren't floats.
     rhoA, L = float(rhoA), float(L)
 
@@ -16,6 +22,12 @@ def calculate_mass_matrix(rhoA, L):
 
 
 def calculate_stiffness_matrix(EA, L):
+    """
+    Calculates stiffness matrix
+    :param EA:
+    :param L:
+    :return: stiffness matrix element
+    """
     # convert to floats just in case the inputs aren't floats.
 
     EA, L = float(EA), float(L)
@@ -29,6 +41,13 @@ def calculate_stiffness_matrix(EA, L):
 
 
 def assembler(list_of_matrix, connec_mat, num_nodes):
+    """
+    Assembles global matrix
+    :param list_of_matrix: 3D list of matrix to be assembled
+    :param connec_mat:
+    :param num_nodes:
+    :return: Assembled global matrix
+    """
     # read the connec_mat and place the m_e corresponding the e^th index of the connec_mat
     # just remember to sum it up when placing it in the new matrix
     # or better yet, construct a nxn 0 matrix where n is the number of nodes
@@ -55,6 +74,12 @@ def assembler(list_of_matrix, connec_mat, num_nodes):
 
 
 def eigensolver(M, K):
+    """
+    Solves generalized eigen problem
+    :param M: glbal mass
+    :param K: global K
+    :return: eigenvalue, eigenvector, nat freq
+    """
     # K \phi = \lambda M \phi ; \lamda is the eigenvalues and \phi is the eigenvectors
     eigval, eigvec = eigh(K, M, eigvals_only=False)
     omega = eigval ** 0.5
@@ -64,6 +89,12 @@ def eigensolver(M, K):
 
 
 def connec_generator(elements, L=1):
+    """
+    helper function for generating connectivity matrix
+    :param elements: mum of elements
+    :param L: Lengh
+    :return: connectivity matrix, num of nodes, length of element
+    """
     num_nodes = elements + 1
     l_e = float(L) / float(elements)
     shape = (elements, 2)

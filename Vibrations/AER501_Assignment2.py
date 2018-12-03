@@ -21,16 +21,16 @@ tion and frequency response analysis functions)
 
 def element_stiffness(EA, EI, x1, y1, x2, y2):
     """
-    Calculates the element stiffness matrix
+    Calculates the element stiffness matrix, wrapper for the one supplied for the assignment
 
-    :param EA:
-    :param EI:
-    :param x1:
-    :param y1:
-    :param x2:
-    :param y2:
+    :param EA: 's modulus multiplied by area
+    :param EI: young's modulus multiplied by second moment of intertia
+    :param x1: node 1 x coordinate
+    :param y1: node 1 y coordinate
+    :param x2: node 2 x coordinate
+    :param y2: node 2 y coordinate
 
-    :return:
+    :return: element stiffness matrix
     """
     return em.stiffness(EA, EI, x1, y1, x2, y2)
 
@@ -38,14 +38,24 @@ def element_stiffness(EA, EI, x1, y1, x2, y2):
 def element_mass_matrix(rho, x1, y1, x2, y2):
     """
     Calculates the element mass matrix
-    :return:
+
+    :param rho: density
+    :param x1: node 1 x coordinate
+    :param y1: node 1 y coordinate
+    :param x2: node 2 x coordinate
+    :param y2: node 2 y coordinate
+    :return: element mass matrix
     """
     return em.mass(rho, x1, y1, x2, y2)
 
 def assembly(list_of_matrix, connec_mat, num_nodes):
     """
     Assembles the global stiffness matrix and mass matrices
-    :return:
+
+    :param list_of_matrix: list of matrices to be assembled using a 3dimensional array
+    :param connec_mat: connectivity matrix
+    :param num_nodes: number of nodes
+    :return: assembled global matrix 2dimensional
     """
     elements = list_of_matrix.shape[0]
     dof = num_nodes * 3
@@ -113,10 +123,22 @@ def assembly(list_of_matrix, connec_mat, num_nodes):
 
 
 def check_symmetric(a, tol=1e-8):
+    """
+    Helper function for sanity checks by checking if the matrix, a is symmetric
+    :param a: Matrix to be checked for symmetry
+    :param tol: (Optional) tolerances
+    :return: boolean T or F
+    """
     return np.allclose(a, a.T, atol=tol)
 
 
 def eigensolver(M, K):
+    """
+    Uses a general eigenvalue problem solver
+    :param M: global mass matrix
+    :param K: global stiffness matrix
+    :return: eigenvalues, eigenvectors, and the natural frequency in radians.
+    """
     # K \phi = \lambda M \phi ; \lamda is the eigenvalues and \phi is the eigenvectors
     eigval, eigvec = eigh(K, M, eigvals_only=False)
     omega = eigval ** 0.5
@@ -126,6 +148,14 @@ def eigensolver(M, K):
 
 
 def plot_mode_shape(eigvec, eigvec1, eigvec2, eigvec3):
+    """
+    Helper function for plotting mode shapes
+    :param eigvec: first eigenvector to be plotted for Mode Shape 1
+    :param eigvec1: second eigenvector to be plotted for Mode Shape 2
+    :param eigvec2: third eigenvector to be plotted for Mode Shape 3
+    :param eigvec3: fourth eigenvector to be plotted for Mode Shape 4
+    :return: Nothing
+    """
 
     plt.ion()
     plt.subplot(2, 2, 1)
@@ -147,8 +177,11 @@ def plot_mode_shape(eigvec, eigvec1, eigvec2, eigvec3):
 
 def free_vibration(M, K, local_mesh):
     """
-    Question 2: Calculates natural frequencies and mode shapes
-    :return:
+    Question 2: Calculates natural frequencies and mode shapes assuming free vibration
+    :param M: Global mass matrix
+    :param K: Global stiffness matrix
+    :param local_mesh: custom class of messhes, for which mesh is to be analyzed with free vibration
+    :return: eigenvalue, eigenvector, natural frequency in radians, natural frequency in hertz, reduced global mass matrix, reduced global K matrix
     """
     reduced_M = M[local_mesh.dof_active, :][:, local_mesh.dof_active]
     reduced_K = K[local_mesh.dof_active, :][:, local_mesh.dof_active]
@@ -162,7 +195,17 @@ def free_vibration(M, K, local_mesh):
 def direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, reduced_K, Omega_list):
     """
     Calculates frequency response using the full-order dynamic stiffness matrix
-    :return:
+
+    :param rhoA: not Needed anymore (cleanup)
+    :param EA: not Needed anymore (cleanup)
+    :param EI: not Needed anymore (cleanup)
+    :param local_mesh:  custom class of messhes, for which mesh is to be analyzed
+    :param dof: number of degree of freedom
+    :param y_offset: dof offset for the y axis degree of freedom
+    :param reduced_M: reduced global mass matrix
+    :param reduced_K: reduced global stiffness matrix
+    :param Omega_list: A linspace of all Omega (excitation frequency) to be analyzed
+    :return: absolute value of frequency response at R, reduced force vector , degree of freedom at R, u0[R_dof], frequency response at R
     """
 
     # QUESTION 3 A
@@ -199,7 +242,13 @@ def direct_freq_analysis(rhoA, EA, EI, local_mesh, dof, y_offset, reduced_M, red
 def modal_freq_analyis(eigvec, eigval, reduced_f, Omega_list, m):
     """
     Calculates frequency response using modal analysis approach.
-    :return:
+
+    :param eigvec: eigenvector
+    :param eigval: eigenvalue
+    :param reduced_f: reduced force vector
+    :param Omega_list: linspace of excitation frequency to be analyzed
+    :param m: mode number
+    :return: absolute value of the frequency response using modal analysis, frequency response using modal analysis
     """
     # Question 3 B
     num_of_eig = len(eigval)
@@ -220,6 +269,11 @@ def modal_freq_analyis(eigvec, eigval, reduced_f, Omega_list, m):
 
 
 def get_mesh_info (local_mesh):
+    """
+    Helper function for getting information about a mesh
+    :param local_mesh: the mesh whose information is to be extracted
+    :return: connectivity matrix, X coordinate, vector, Y coordinate vector, number of elements
+    """
     connec = local_mesh.NOD
     num_nodes = local_mesh.X.shape[0]
     X = local_mesh.X
@@ -229,9 +283,16 @@ def get_mesh_info (local_mesh):
     return connec, num_nodes, X, Y, num_elements
 
 def plot_natural_freq(nat_freq, f1, f2, f3):
-    # Part 2
-    #n = 4
-    #x = np.linspace(0, n, n)
+    """
+    Helper function for plotting natural frequencies
+    :param nat_freq: first natural frequency to be plotted
+    :param f1: second natural frequency to be plotted
+    :param f2: third natural frequency to be plotted
+    :param f3: fourth natural frequency to be plotted
+    :return: Nothing
+    """
+
+
 
     plt.ion()
     plt.plot(nat_freq, label="Mesh1 - 1 Element per Beam ")
@@ -248,12 +309,12 @@ def plot_natural_freq(nat_freq, f1, f2, f3):
 
 def plot_excitation_freq(X, Y, Y1, Y2, Y3):
     """
-
+    helper function for plotting the frequency response using direct analysis against the excitation frequency
     :param X: The linspace of frequencies that is to be calculated for each Mesh's u0 at R
-    :param Y: u0 at R for Mesh 1
-    :param Y1: u0 at R for Mesh 2
-    :param Y2: u0 at R for Mesh 3
-    :param Y3: u0 at R for Mesh 4
+    :param Y: freq response for Mesh 1
+    :param Y1: freq response for Mesh 2
+    :param Y2: freq response for Mesh 3
+    :param Y3: freq response for Mesh 4
     :return: None -- a figure will popup with the plots.
     """
     plt.ion()
@@ -262,13 +323,22 @@ def plot_excitation_freq(X, Y, Y1, Y2, Y3):
     plt.semilogy(X, Y2, label="Mesh 3")
     plt.semilogy(X, Y3, label="Mesh 4")
     plt.legend()
-    plt.title("Excitation Frequency ")
-    plt.xlabel("Frequency in Hz")
-    plt.ylabel("u0 in m)")
+    plt.title("Direct Frequency Analysis ")
+    plt.xlabel("Excitation Frequency in Hz")
+    plt.ylabel("Frequency Response")
     plt.pause(1000)
     plt.show()
 
 def plot_modal (X, Y, Y1, Y2, Y3, Y4):
+    """
+    helper function for plotting the frequency response using modal analysis against the excitation frequency
+    :param X: The linspace of frequencies that is to be calculated for each Mesh's u0 at R
+    :param Y: freq response for Mesh 1
+    :param Y1: freq response for Mesh 2
+    :param Y2: freq response for Mesh 3
+    :param Y3: freq response for Mesh 4
+    :return: none
+    """
     plt.ion()
     plt.semilogy(X, Y, label="M=126")
     plt.semilogy(X, Y1, label="M=20")
@@ -278,8 +348,8 @@ def plot_modal (X, Y, Y1, Y2, Y3, Y4):
 
     plt.legend()
     plt.title("Modal Analysis")
-    plt.xlabel("Frequency in Hz")
-    plt.ylabel("u0 in m)")
+    plt.xlabel("Excitation Frequency in Hz")
+    plt.ylabel("Frequency Response")
     plt.pause(1000)
     plt.show()
 
@@ -300,30 +370,34 @@ def plot_error (X, Y_direct, Y, Y1, Y2, Y3, Y4):
     plt.legend()
     plt.title("Error Analysis")
     plt.ylabel("Error between Direct and Modal Analysis for Mode Shapes)")
-    plt.xlabel("Frequency in Hz")
+    plt.xlabel("Excitation Frequency in Hz")
     plt.pause(1000)
     plt.show()
 
 
 def bonus(eigvec, reduced_f, K_reduced, eigval):
+    """
+    Calculated delu
+    :param eigvec: eigenvector
+    :param reduced_f: reduced force vector
+    :param K_reduced: reduced K vecotr
+    :param eigval: eigenvalue
+    :return: del U
+    """
     # delu = SUM_1_N { 1/eig(i) * eig * eigT * f } - SUM_1_M{  1/eig(i) * eig * eigT * f }  m is mode
     # delu = inv(Kr)*f0r - ...
     #     phi(:,1:nmodes)*inv(diag((2*pi.*w(1:nmodes)).^2))*phi(:,1:nmodes)'*f0r;
     modes = 15
     Lambda = np.diag(eigval[:modes])
-    print "shape np.linalg.inv(K_reduced) ", np.linalg.inv(K_reduced).shape
-    print "reduced_f", reduced_f.shape
-    print "eigvec[:, :modes]", eigvec[:, :modes].shape
-    print "Lambda", Lambda
+
     delu = np.matmul(np.linalg.inv(K_reduced), reduced_f) - np.matmul(np.matmul(
         np.matmul(eigvec[:, :modes], np.linalg.inv(Lambda)), np.transpose(eigvec[:, :modes])), reduced_f)
-    print "delu", delu
-    print "delu shape", delu.shape
 
     return delu
 
 
 def plot_bonus(Omega_list, u0_at_R, u0_modal, delu):
+
     print "new delu", delu.shape
     plt.ion()
     plt.figure()
@@ -333,7 +407,7 @@ def plot_bonus(Omega_list, u0_at_R, u0_modal, delu):
     print "u0_modal", u0_modal.shape
     plt.semilogy(Omega_list, u0_modal + delu, label="Modal with added Delta u")
     plt.xlabel("Excitation frequency in Hz")
-    plt.ylabel("Mode Shapes")
+    plt.ylabel("Frequency Response")
     plt.title("(Quasi-static Correction for Frequency Response Analysis (Bonus)")
     plt.legend()
     plt.pause(1000)
