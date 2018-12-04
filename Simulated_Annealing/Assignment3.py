@@ -1,6 +1,6 @@
 import move
 import numpy as np
-
+import random
 
 def SA(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.99):
     """
@@ -16,6 +16,35 @@ def SA(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.99):
 
     xopt, fopt = 0, 0
     return xopt, fopt
+
+
+def generate_perturb_x(x, epsilon, n):
+    random_values = n * np.random.rand(x.shape)
+    delta_x_es = x - random_values
+
+    x_primes = x + epsilon * delta_x_es
+
+    return x_primes
+
+
+def compute_delta_E(x, x_prime):
+    delta_E = bump(x) - bump(x_prime)
+
+    return delta_E
+
+
+def delta_E_acceptance(delta_E, T, x, x_prime):
+    if decision(delta_E, T):
+        ret = x_prime
+    else:
+        ret = x
+    return ret
+
+
+def decision(delta_E, T):
+    probability = delta_E / T
+    return random.random() < probability
+
 
 def bump(x):
     """
@@ -40,6 +69,44 @@ def schedule(c, t, t_start = 1000):
 
     return T
 
+
+
+###################################################################
+
+
+def penalty_function(x):
+    phi = 1
+    if(is_x_valid(x)):
+        phi = 0
+    return phi
+
+
+def penalty_parameter(C, iteration_number):
+    alpha = 1.4-10
+    rho = np.power(C * iteration_number, alpha)
+    return rho
+
+
+def objective_function_update(C, iteration_number, x):
+    """
+    Updates the original objective bump function
+    :param C:
+    :param iteration_number:
+    :param x:
+    :return:
+    """
+    rho = penalty_parameter(C, iteration_number)
+    f = bump(x) + rho * penalty_function(x)
+    return f
+
+
+def is_x_valid(x):
+    """
+    return if x is valid or not.
+    :param x:
+    :return:
+    """
+    return NotImplemented
 
 if __name__ == '__main__':
     print move.move(np.array([0, 0]), np.array([-1, -1]), np.array([1, 1]), 5)
