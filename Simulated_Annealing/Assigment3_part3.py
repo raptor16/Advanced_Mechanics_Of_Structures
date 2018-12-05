@@ -155,11 +155,10 @@ if __name__ == '__main__':
     ub_list = [0.0001] * 10
     lb = np.array(lb_list)
     ub = np.array(ub_list)
-    epsilon = 0.01
+    epsilon = 0.3 * ub[0]
     max_iter = 5000
     t_start = 1000
     c = 0.99
-    n = 2
     get_perturbed_values(x_areas, lb, ub, epsilon)
     xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
     print "fopt", fopt
