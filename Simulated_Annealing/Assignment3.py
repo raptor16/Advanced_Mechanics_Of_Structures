@@ -119,7 +119,7 @@ if __name__ == '__main__':
     lb = np.array([0., 0.])
     ub = np.array([10., 10.])
     t_start = 1000
-    c = 0.99
+    c = 0.997
     a_large_number = 100
     max_iter = 5000
     xopt, fopt = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
