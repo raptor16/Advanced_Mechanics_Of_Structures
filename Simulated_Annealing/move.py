@@ -37,6 +37,7 @@ def move (x, lb, ub, epsilon):
     flag = 0
     # typecast
     x, lb, ub = x.astype(float), lb.astype(float), ub.astype(float)
+    random.seed(42)
     while flag == 0:
         ind = int(np.floor(np.random.rand() * n))  # randomly generate an integer between 1 and n
         # to select the design variable that will be

@@ -88,6 +88,7 @@ def compute_delta_E(x, x_prime, n=2):
 
 def decision(delta_E, T):
     probability = np.exp(delta_E / T)
+    random.seed(42)
     return random.random() < probability
 
 
