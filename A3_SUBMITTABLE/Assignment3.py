@@ -2,7 +2,6 @@ import move
 import numpy as np
 import random
 from matplotlib import pyplot as plt
-import scipy
 
 def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
     """
@@ -152,14 +151,6 @@ def plot_convergence(fopt, c):
 
 ########################################################################
 
-
-def bonus(x0):
-    scipy.optimize.minimize(bump, x0, x0)
-
-
-########################################################################
-
-
 if __name__ == '__main__':
     n = 2
     sample_x = np.array([1., 1.])
@@ -171,11 +162,11 @@ if __name__ == '__main__':
     a_large_number = 100
     max_iter = 5000
 
-
     average_n = 5
+
     shape = (5000, )
     total_fopt_graph = np.zeros(shape)
-
+    """
     for i in range(average_n):
         xopt, fopt, fopt_graph = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
         total_fopt_graph += fopt_graph
@@ -183,10 +174,7 @@ if __name__ == '__main__':
     print "xopt", xopt
     print "fopt", fopt
     plot_convergence(average, c)
-
-
     """
-    # Uncomment this block for the fopt vs c graph
     c_arr = np.array([0.97, 0.975, 0.98, 0.985, 0.99, 0.995, 0.996, 0.997, 0.998, 0.999])
     fopt_arr = np.empty(c_arr.shape)
     print c_arr.shape
@@ -200,4 +188,3 @@ if __name__ == '__main__':
     plt.ylabel("fopt")
     plt.title("fopt vs c parameter")
     plt.show()
-    """
