@@ -3,8 +3,9 @@ import truss
 from Assignment3 import get_perturbed_values
 from Assignment3 import decision
 from Assignment3 import schedule
+from matplotlib import pyplot as plt
 
-def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
+def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2, rho=1):
     """
     :param x0: initial guess
     :param lb: vector lower bound
@@ -19,22 +20,25 @@ def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
     iteration = 0
     T = t_start
     x, xopt = x0, x0
+    shape = (5000,)
+    fopt_graph = np.empty(shape)
 
     while(iteration < max_iter):
         x_prime = get_perturbed_values(x, lb, ub, epsilon)
-        x = delta_E_acceptance(T, x, x_prime, iteration)
-        if calculate_pi_func(x, iteration) < calculate_pi_func(xopt, iteration):
+        x = delta_E_acceptance(T, x, x_prime, rho)
+        fopt_graph[iteration] = calculate_pi_func(x, rho)
+        if calculate_pi_func(x, rho) < calculate_pi_func(xopt, rho):
             xopt = x
-            fopt = calculate_pi_func(xopt, iteration)
+            fopt = calculate_pi_func(xopt, rho)
         T = schedule(c, iteration, t_start)
         print iteration
         iteration += 1
 
     # fopt = calculate_pi_func(xopt)
-    return xopt, fopt
+    return xopt, fopt, fopt_graph
 
 
-def delta_E_acceptance(T, x, x_prime, iteration):
+def delta_E_acceptance(T, x, x_prime, rho):
     """
     Generates a new x value
     :param T:
@@ -43,7 +47,7 @@ def delta_E_acceptance(T, x, x_prime, iteration):
     :param n:
     :return:
     """
-    delta_E = compute_delta_E(x, x_prime, iteration)
+    delta_E = compute_delta_E(x, x_prime, rho)
 
     if delta_E > 0:
         # accept move
@@ -56,8 +60,8 @@ def delta_E_acceptance(T, x, x_prime, iteration):
     return ret
 
 
-def compute_delta_E(x_areas, x_areas_prime, iteration):
-    delta_E = calculate_pi_func(x_areas, iteration) - calculate_pi_func(x_areas_prime, iteration)
+def compute_delta_E(x_areas, x_areas_prime, rho):
+    delta_E = calculate_pi_func(x_areas, rho) - calculate_pi_func(x_areas_prime, rho)
     return delta_E
 
 
@@ -72,8 +76,8 @@ def is_violate_constraints_stress(sigmas):
 def get_weight(areas):
     """
     Gets the objective function with the added ONE penalty
-    :param areas:
-    :return:
+    :param areas: np array of areas
+    :return: total weight scalar of the truss
     """
     lengths = get_lengths()
     density = 2700 # 6061 Aluminium alloy in kg/m3
@@ -86,6 +90,11 @@ def get_weight(areas):
 
 
 def get_stress(list_of_A):
+    """
+    Gets the stress from the truss solver in A1
+    :param list_of_A: list of areas
+    :return: stress in N/m^2
+    """
     # INPUT FOR 10-bar truss
     sample_connec = [[1, 2],
                      [2, 3],
@@ -160,15 +169,17 @@ def quadratic_penalty(sigmas):
 
     return phi
 
+"""
 def calculate_rho_scalar(iteration, C=0.5, alpha=1.5):
     rho = np.power(C * iteration, alpha)
     return rho
+"""
 
 
-def calculate_pi_func(x_areas, iteration):
+def calculate_pi_func(x_areas, rho):
     alpha = 1.5
     C = 0.5
-    rho = calculate_rho_scalar(iteration, C, alpha)
+    # rho = calculate_rho_scalar(iteration, C, alpha)
 
     sigmas = get_stress(x_areas)
     phi = quadratic_penalty(sigmas)
@@ -177,19 +188,32 @@ def calculate_pi_func(x_areas, iteration):
     pi = obj_func + rho * phi
     return pi
 
-###########################################################
 
-"""
-def is_final_solution_feasible(xopt):
-    # Check xopt against ub and lb
-    xopt_ub_check = np.less(xopt, ub)
-    if !xopt_ub_check.any(False):
-        # feasible
-    
-    print "no it's not feasible"
+def plot_convergence(fopt, c):
+    """
+    helper function for plotting the convergence of fopt
+    :param fopt: y axis being plotted
+    :param c: used for labeling the graph, this is the cooling schedule parameter
+    :return: Nothing
+    """
+    num_of_iterations = 5000
+    x = np.linspace(1, num_of_iterations, 5000)
+    label_text = "c=" + str(c)
+    plt.figure()
+    plt.plot(x, fopt, label=label_text)
+    plt.xlabel("iterations")
+    plt.ylabel("optimal f")
+    plt.title("10-bar truss total weight vs. Number of Iterations")
+    plt.legend()
+    plt.show()
 
-    print "yes final solution is feasible"
-"""
+    plt.figure()
+    plt.semilogy(x, fopt, label=label_text)
+    plt.xlabel("iterations")
+    plt.ylabel("optimal f")
+    plt.title("10-bar truss total weight  vs. Number of Iterations")
+    plt.legend()
+    plt.show()
 
 if __name__ == '__main__':
 
@@ -210,8 +234,15 @@ if __name__ == '__main__':
     max_iter = 5000
     t_start = 1000
     c = 0.996
-    get_perturbed_values(x_areas, lb, ub, epsilon)
-    xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
-    print "fopt", fopt
-    print "xopt", xopt
+    average_n = 5
+    shape = (5000,)
+    total_fopt_graph = np.zeros(shape)
 
+    rho = 100
+    for i in range(average_n):
+        xopt, fopt, fopt_graph = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n, rho)
+        total_fopt_graph += fopt_graph
+    average = total_fopt_graph / average_n
+    print "xopt", xopt
+    print "fopt", fopt
+    plot_convergence(average, c)

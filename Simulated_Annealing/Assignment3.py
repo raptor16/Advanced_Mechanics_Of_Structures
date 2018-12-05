@@ -12,7 +12,8 @@ def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
     :param max_iter: maximum number of iterations
     :param t_start: starting temperature
     :param c: cooling schedule parameter
-    :return:
+    :return: xopt is the optimized design variable values, fopt is the optimized objective function values,
+        evaluated objective function at x, primarily used for graphing
     """
     # initialize
     iteration = 0
@@ -55,7 +56,7 @@ def schedule(c, iteration, t_start = 1000):
     :param c: cooling schedule parameter
     :param t: time (scalar)
     :param t_start: starting temperature nx1 column vector
-    :return:
+    :return: Temperature based on the cooling schedule function used
     """
     T = t_start * np.power(c, iteration)
 
@@ -64,12 +65,12 @@ def schedule(c, iteration, t_start = 1000):
 
 def delta_E_acceptance(T, x, x_prime, n=2):
     """
-    Generates a new x value
-    :param T:
-    :param x:
-    :param x_prime:
-    :param n:
-    :return:
+    Generates a x value depending on if a move is accepted or rejected
+    :param T: caculated Temperature from cooling schedule function
+    :param x: the array of design variables
+    :param x_prime: the array of design variables perturbed
+    :param n: this is not necessary; it is the dimensions
+    :return: the design variable update based on the move
     """
     delta_E = compute_delta_E(x, x_prime, n)
     if delta_E > 0:
@@ -85,18 +86,37 @@ def delta_E_acceptance(T, x, x_prime, n=2):
 #### HELPERS
 
 def compute_delta_E(x, x_prime, n=2):
+    """
+    helper for calculating the deltaE
+    :param x: design variable
+    :param x_prime: design variable perturbed
+    :param n: not needed, dimension
+    :return:
+    """
     delta_E = bump(x, n) - bump(x_prime, n)
 
     return delta_E
 
 
 def decision(delta_E, T):
+    """
+    helper for 'rolling the dice' based on probability
+    :param delta_E: deltaE = f(x) - f(x')
+    :param T: Temperature from cooling shcedule
+    :return: true or false depending on the decision absed on the probability
+    """
     probability = np.exp(delta_E / T)
     random.seed(42)
     return random.random() < probability
 
 
 def is_violate_constraints_bump(x, n=2):
+    """
+    checks if any of the bump function constraints are being violated
+    :param x: design variable
+    :param n: dimension, optional
+    :return:
+    """
     return np.prod(x) < 0.75 or np.sum(x) > (15 * n / 2)
 
 
