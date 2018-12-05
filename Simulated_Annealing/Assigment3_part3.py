@@ -22,7 +22,6 @@ def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
 
     while(iteration < max_iter):
         x_prime = get_perturbed_values(x, lb, ub, epsilon)
-        # get_stress
         x = delta_E_acceptance(T, x, x_prime, n)
         if get_weight(x) < get_weight(xopt):
             xopt = x
@@ -61,9 +60,10 @@ def compute_delta_E(x_areas, x_areas_prime, n=2):
     return delta_E
 
 
-def is_violate_constraints_stress(sigmas, n=2):
+def is_violate_constraints_stress(sigmas):
     sigma_max = 270 * 10**6 # Newton per Meter Square
-    return np.greater(sigmas, sigma_max)
+    a_large_number = 100
+    return np.greater(sigmas, sigma_max) * a_large_number
 
 
 #################### TRUSS   ##########################
@@ -73,10 +73,16 @@ def get_weight(areas):
     density = 2700 # 6061 Aluminium alloy in kg/m3
     weights = areas * lengths * density
     total_weight = np.sum(weights)
+    # a_large_number = 100
+
+    stress = get_stress(areas)
+    #if is_violate_constraints_stress(stress):
+    #    weights += a_large_number
+    weights + is_violate_constraints_stress(stress)
     return total_weight
 
 
-def get_stress():
+def get_stress(list_of_A):
     # INPUT FOR 10-bar truss
     sample_connec = [[1, 2],
                      [2, 3],
@@ -97,7 +103,6 @@ def get_stress():
                          [2, 0]]
 
     list_of_E = [70 * 10 ** 9] * 10
-    list_of_A = [1 * 10 ** -4] * 10
 
     displacements = [0, 0, np.NAN, np.NAN, np.NAN, np.NAN, 0, 0, np.NAN, np.NAN, np.NAN,
                      np.NAN]  # Use NAN for unknown boundary conditions
@@ -105,10 +110,6 @@ def get_stress():
 
     stress = truss.main_driver(sample_connec, nodal_coordinates, list_of_E, list_of_A, displacements, forces)
     stress = np.array(stress)
-    a_large_number = 100
-    n = 2
-    if is_violate_constraints_stress(stress, n):
-        stress += a_large_number
 
     return stress
 
@@ -142,20 +143,24 @@ def get_lengths():
 if __name__ == '__main__':
 
     ######################## 10-bar Truss ######################
-    n = 2 # dimensions
+    n = 10
     # Design variable is cross-sectional area. There are 10 of them -- list_of_A
-    x_areas = np.array([1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4,
-              1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4])
+
+    #x_areas = np.array([1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4,
+    #          1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4])
+    x_areas_list = [1. * 10 ** -4] * 10
+    x_areas = np.array(x_areas_list)
     # Minimize the weight of the structure subject to stress constraints
-    lb_list = [0] * 10
-    ub_list = [5] * 10
+    lb_list = [0.] * 10
+    ub_list = [0.0001] * 10
     lb = np.array(lb_list)
     ub = np.array(ub_list)
-    epsilon = 2
+    epsilon = 0.01
     max_iter = 5000
     t_start = 1000
     c = 0.99
     n = 2
+    get_perturbed_values(x_areas, lb, ub, epsilon)
     xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
     print "fopt", fopt
     print "xopt", xopt

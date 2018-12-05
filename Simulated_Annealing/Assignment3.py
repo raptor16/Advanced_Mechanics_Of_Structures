@@ -114,10 +114,10 @@ def bump(x, n=2):
 
 if __name__ == '__main__':
     n = 2
-    sample_x = np.array([1, 1])
+    sample_x = np.array([1., 1.])
     epsilon = 2
-    lb = np.array([0, 0])
-    ub = np.array([10, 10])
+    lb = np.array([0., 0.])
+    ub = np.array([10., 10.])
     t_start = 1000
     c = 0.99
     a_large_number = 100
