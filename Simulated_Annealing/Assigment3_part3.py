@@ -69,16 +69,21 @@ def is_violate_constraints_stress(sigmas):
 #################### TRUSS   ##########################
 
 def get_weight(areas):
+    """
+    Gets the objective function with the added ONE penalty
+    :param areas:
+    :return:
+    """
     lengths = get_lengths()
     density = 2700 # 6061 Aluminium alloy in kg/m3
     weights = areas * lengths * density
-    total_weight = np.sum(weights)
     # a_large_number = 100
 
     stress = get_stress(areas)
     #if is_violate_constraints_stress(stress):
     #    weights += a_large_number
-    weights + is_violate_constraints_stress(stress)
+    weights = weights + is_violate_constraints_stress(stress)
+    total_weight = np.sum(weights)
     return total_weight
 
 
@@ -139,7 +144,6 @@ def get_lengths():
 
 ###########################################################
 
-
 if __name__ == '__main__':
 
     ######################## 10-bar Truss ######################
@@ -155,10 +159,10 @@ if __name__ == '__main__':
     ub_list = [0.0001] * 10
     lb = np.array(lb_list)
     ub = np.array(ub_list)
-    epsilon = 0.3 * ub[0]
+    epsilon = 0.2 * ub[0]
     max_iter = 5000
     t_start = 1000
-    c = 0.99
+    c = 0.5
     get_perturbed_values(x_areas, lb, ub, epsilon)
     xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
     print "fopt", fopt
