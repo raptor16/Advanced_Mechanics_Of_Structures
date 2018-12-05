@@ -209,7 +209,7 @@ if __name__ == '__main__':
     epsilon = 0.3 * ub[0]
     max_iter = 5000
     t_start = 1000
-    c = 0.99
+    c = 0.996
     get_perturbed_values(x_areas, lb, ub, epsilon)
     xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
     print "fopt", fopt

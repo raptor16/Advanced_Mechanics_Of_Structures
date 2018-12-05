@@ -117,13 +117,16 @@ def bump(x, n=2):
 
 ########################################################################
 
-def plot_convergence(fopt):
+def plot_convergence(fopt, c):
     num_of_iterations = 5000
     x = np.linspace(1, num_of_iterations, 5000)
     print x
-    plt.plot(x, fopt)
+    label_text = "c=" + str(c)
+    plt.plot(x, fopt, label=label_text)
     plt.xlabel("iterations")
     plt.ylabel("optimal f")
+    plt.title("Bump Function vs. Number of Iterations")
+    plt.legend()
     plt.show()
 
 ########################################################################
@@ -135,10 +138,20 @@ if __name__ == '__main__':
     lb = np.array([0., 0.])
     ub = np.array([10., 10.])
     t_start = 1000
-    c = 0.99
+    c = 0.997
     a_large_number = 100
     max_iter = 5000
-    xopt, fopt, fopt_graph = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
+
+    average_n = 5
+
+    shape = (5000, )
+    total_fopt_graph = np.zeros(shape)
+
+    for i in range(average_n):
+        xopt, fopt, fopt_graph = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
+        total_fopt_graph += fopt_graph
+    average = total_fopt_graph / average_n
     print "xopt", xopt
     print "fopt", fopt
-    plot_convergence(fopt_graph)
+    plot_convergence(average, c)
+
