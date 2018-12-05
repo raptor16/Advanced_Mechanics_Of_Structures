@@ -10,7 +10,6 @@ import math
 import numpy as np
 
 def element_matrix(connec, nodal_coordinates, list_of_E, list_of_A, list_of_L): # pascal for E and meters for any lengths
-    print "element_matrix"
 
     list_of_k = []
     list_of_l = []
@@ -42,7 +41,6 @@ def element_matrix(connec, nodal_coordinates, list_of_E, list_of_A, list_of_L): 
     return list_of_k, list_of_l, list_of_m
 
 def assembly(connec, nodal_coordinates, list_of_k):
-    print "assembly"
 
     connec_dof_index = construct_connec_dof(connec)
     length_nodal_coord = len(nodal_coordinates)
@@ -69,7 +67,6 @@ def construct_connec_dof(connec):
     return connec_dof_index
 
 def solve(K, displacements, forces_applied):
-    print "solve"
 
     unknown_BC_indices = []
     known_BC_indices = []
@@ -110,7 +107,6 @@ def solve(K, displacements, forces_applied):
     return displacements, forces_reaction
 
 def post_process(connec, displacements, list_of_E, list_of_L, list_of_l, list_of_m):
-    print "post_process"
 
     stress = [0.] * len(connec)
     strain = [0.] * len(connec)
@@ -135,30 +131,13 @@ connec: connectivity matrix, where the index represents the element numbers
 nodal_coordinates: list of (x,y) of each nodes where the index represents the node number
 """
 def main_driver(connec, nodal_coordinates, list_of_E, list_of_A, displacements, forces_applied):
-    print "main"
 
     list_of_L = get_lengths(connec, nodal_coordinates)
     list_of_k, list_of_l, list_of_m = element_matrix(connec, nodal_coordinates, list_of_E, list_of_A, list_of_L)  # array of E's, Array of
     K = assembly(connec, nodal_coordinates, list_of_k)
-
-    print "K:"
-    print K
-
     d, F_reaction = solve(K, displacements, forces_applied)
-
-    print "displacement"
-    print d
-
-    print "F_reaction"
-    print F_reaction
-
     stress, strain = post_process(connec, d, list_of_E, list_of_L, list_of_l, list_of_m)
 
-    print "stress:"
-    print stress
-
-    print "strain:"
-    print strain
     return stress
 
 
