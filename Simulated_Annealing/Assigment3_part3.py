@@ -63,7 +63,6 @@ def compute_delta_E(x_areas, x_areas_prime, n=2):
 def is_violate_constraints_stress(sigmas):
     sigma_max = 270 * 10**6 # Newton per Meter Square
     a_large_number = 100
-    print "is_violate_constraints", np.greater(sigmas, sigma_max) * a_large_number
     return np.greater(sigmas, sigma_max) * a_large_number
 
 
@@ -149,20 +148,20 @@ if __name__ == '__main__':
 
     #x_areas = np.array([1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4,
     #          1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4])
-    x_areas_list = [1] * 10
+    x_areas_list = [1. * 10 ** -4] * 10
     x_areas = np.array(x_areas_list)
     # Minimize the weight of the structure subject to stress constraints
-    lb_list = [0.0] * 10
-    ub_list = [0.8] * 10
+    lb_list = [0.] * 10
+    ub_list = [0.0001] * 10
     lb = np.array(lb_list)
     ub = np.array(ub_list)
-    epsilon = 0.03
+    epsilon = 0.01
     max_iter = 5000
     t_start = 1000
     c = 0.99
     n = 2
     get_perturbed_values(x_areas, lb, ub, epsilon)
-    #xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
-    #print "fopt", fopt
-    #print "xopt", xopt
+    xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
+    print "fopt", fopt
+    print "xopt", xopt
 
