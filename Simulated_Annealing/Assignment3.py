@@ -1,6 +1,7 @@
 import move
 import numpy as np
 import random
+from matplotlib import pyplot as plt
 
 def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
     """
@@ -17,10 +18,14 @@ def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
     iteration = 0
     T = t_start
     x, xopt = x0, x0
+    shape = (5000, )
+    fopt_graph = np.empty(shape)
 
     while(iteration < max_iter):
         x_prime = get_perturbed_values(x, lb, ub, epsilon)
         x = delta_E_acceptance(T, x, x_prime, n)
+        if not is_violate_constraints_bump(x, n):
+            fopt_graph[iteration] = bump(x)
         if bump(x) < bump(xopt):
             xopt = x
         T = schedule(c, iteration, t_start)
@@ -28,7 +33,7 @@ def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
         iteration += 1
 
     fopt = bump(xopt, n)
-    return xopt, fopt
+    return xopt, fopt, fopt_graph
 
 
 def get_perturbed_values(x, lb, ub, epsilon):
@@ -67,7 +72,6 @@ def delta_E_acceptance(T, x, x_prime, n=2):
     :return:
     """
     delta_E = compute_delta_E(x, x_prime, n)
-
     if delta_E > 0:
         # accept move
         ret = x_prime
@@ -111,6 +115,18 @@ def bump(x, n=2):
 
     return numerator/denominator
 
+########################################################################
+
+def plot_convergence(fopt):
+    num_of_iterations = 5000
+    x = np.linspace(1, num_of_iterations, 5000)
+    print x
+    plt.plot(x, fopt)
+    plt.xlabel("iterations")
+    plt.ylabel("optimal f")
+    plt.show()
+
+########################################################################
 
 if __name__ == '__main__':
     n = 2
@@ -119,9 +135,10 @@ if __name__ == '__main__':
     lb = np.array([0., 0.])
     ub = np.array([10., 10.])
     t_start = 1000
-    c = 0.997
+    c = 0.99
     a_large_number = 100
     max_iter = 5000
-    xopt, fopt = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
+    xopt, fopt, fopt_graph = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
     print "xopt", xopt
     print "fopt", fopt
+    plot_convergence(fopt_graph)
