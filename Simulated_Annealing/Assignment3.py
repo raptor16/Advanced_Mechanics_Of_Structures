@@ -158,7 +158,7 @@ if __name__ == '__main__':
     lb = np.array([0., 0.])
     ub = np.array([10., 10.])
     t_start = 1000
-    c = 0.997
+    c = 0.996
     a_large_number = 100
     max_iter = 5000
 
@@ -174,4 +174,3 @@ if __name__ == '__main__':
     print "xopt", xopt
     print "fopt", fopt
     plot_convergence(average, c)
-

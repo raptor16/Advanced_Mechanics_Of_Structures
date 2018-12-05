@@ -12,9 +12,10 @@ def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2, rho=1)
     :param ub: vector upper bound
     :param epsilon:  step-size controlling magnitude of perturbation to design variables
     :param max_iter: maximum number of iterations
+    :param rho: the P parameter for penalty
     :param t_start: starting temperature
     :param c: cooling schedule parameter
-    :return:
+    :return: Same as Assignment3.py
     """
     # initialize
     iteration = 0
@@ -40,7 +41,7 @@ def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2, rho=1)
 
 def delta_E_acceptance(T, x, x_prime, rho):
     """
-    Generates a new x value
+    Same as Assignment3.py
     :param T:
     :param x:
     :param x_prime:
@@ -61,11 +62,24 @@ def delta_E_acceptance(T, x, x_prime, rho):
 
 
 def compute_delta_E(x_areas, x_areas_prime, rho):
+    """
+    Same as Assignment3_part3.py except it uses the pi function which is the updated objective function given a
+     quadratic penaty
+    :param x_areas: array of areas
+    :param x_areas_prime: array of areas perturbed
+    :param rho: the P parameter
+    :return:
+    """
     delta_E = calculate_pi_func(x_areas, rho) - calculate_pi_func(x_areas_prime, rho)
     return delta_E
 
 
 def is_violate_constraints_stress(sigmas):
+    """
+    check if any stress constraints are violated
+    :param sigmas: array of stress
+    :return: array of values for penalty for each element
+    """
     sigma_max = 270 * 10**6 # Newton per Meter Square
     a_large_number = 100
     return np.greater(sigmas, sigma_max) * a_large_number
@@ -127,6 +141,10 @@ def get_stress(list_of_A):
 
 
 def get_lengths():
+    """
+    get length of each element
+    :return: length list of each element
+    """
     sample_connec = [[1, 2],
                      [2, 3],
                      [3, 6],
@@ -177,6 +195,12 @@ def calculate_rho_scalar(iteration, C=0.5, alpha=1.5):
 
 
 def calculate_pi_func(x_areas, rho):
+    """
+    Calculates the updated objective function
+    :param x_areas: design variable - area
+    :param rho: P parameter
+    :return: updated objective function
+    """
     alpha = 1.5
     C = 0.5
     # rho = calculate_rho_scalar(iteration, C, alpha)
@@ -238,7 +262,7 @@ if __name__ == '__main__':
     shape = (5000,)
     total_fopt_graph = np.zeros(shape)
 
-    rho = 100
+    rho = 1
     for i in range(average_n):
         xopt, fopt, fopt_graph = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n, rho)
         total_fopt_graph += fopt_graph
