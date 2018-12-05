@@ -62,8 +62,7 @@ def compute_delta_E(x_areas, x_areas_prime, n=2):
 
 
 def is_violate_constraints_stress(sigmas, n=2):
-    sigma_max = 270 # MegaPascal
-    print np.greater(sigmas, sigma_max)
+    sigma_max = 270 * 10**6 # Newton per Meter Square
     return np.greater(sigmas, sigma_max)
 
 
@@ -142,22 +141,6 @@ def get_lengths():
 
 if __name__ == '__main__':
 
-    ######################## Bump ######################
-    """
-    n = 2
-    sample_x = np.array([1, 1])
-    epsilon = 2
-    lb = np.array([0, 0])
-    ub = np.array([10, 10])
-    t_start = 1000
-    c = 0.99
-    a_large_number = 100
-    max_iter = 5000
-    xopt, fopt = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
-    print "xopt", xopt
-    print "fopt", fopt
-    """
-
     ######################## 10-bar Truss ######################
     n = 2 # dimensions
     # Design variable is cross-sectional area. There are 10 of them -- list_of_A
@@ -173,5 +156,7 @@ if __name__ == '__main__':
     t_start = 1000
     c = 0.99
     n = 2
-    SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
+    xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
+    print "fopt", fopt
+    print "xopt", xopt
 
