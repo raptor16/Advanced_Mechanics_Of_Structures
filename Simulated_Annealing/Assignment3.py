@@ -1,8 +1,9 @@
 import move
 import numpy as np
 import random
+import truss
 
-def SA(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.99):
+def SA(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
     """
     :param x0: initial guess
     :param lb: vector lower bound
@@ -13,105 +14,246 @@ def SA(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.99):
     :param c: cooling schedule parameter
     :return:
     """
+    # initialize
+    iteration = 0
+    T = t_start
+    x, xopt = x0, x0
 
-    xopt, fopt = 0, 0
+    while(iteration < max_iter):
+        x_prime = get_perturbed_values(x, lb, ub, epsilon)
+        x = delta_E_acceptance(T, x, x_prime, n)
+        if bump(x) < bump(xopt):
+            xopt = x
+        T = schedule(c, iteration, t_start)
+        print iteration
+        iteration += 1
+
+    fopt = bump(xopt, n)
     return xopt, fopt
 
 
-def generate_perturb_x(x, epsilon, n):
-    random_values = n * np.random.rand(x.shape)
-    delta_x_es = x - random_values
+def get_perturbed_values(x, lb, ub, epsilon):
+    """
+    Wrapper function for move function in move.py
+    :param x: design variable
+    :param lb: lower bounds
+    :param ub: upper bounds
+    :param epsilon: step-size controlling magnitude of perturbation to design variabless
+    :return: the perturbed x'
+    """
+    x_prime = move.move(x, lb, ub, epsilon)
+    return x_prime
 
-    x_primes = x + epsilon * delta_x_es
 
-    return x_primes
+def schedule(c, iteration, t_start = 1000):
+    """
+    returns the temperature based on the exponential cooling schedule T(t) = t_start where 0<c<1.
+    :param c: cooling schedule parameter
+    :param t: time (scalar)
+    :param t_start: starting temperature nx1 column vector
+    :return:
+    """
+    T = t_start * np.power(c, iteration)
+
+    return T
 
 
-def compute_delta_E(x, x_prime):
-    delta_E = bump(x) - bump(x_prime)
+def delta_E_acceptance(T, x, x_prime, n=2):
+    """
+    Generates a new x value
+    :param T:
+    :param x:
+    :param x_prime:
+    :param n:
+    :return:
+    """
+    delta_E = compute_delta_E(x, x_prime, n)
+
+    if delta_E > 0:
+        # accept move
+        ret = x_prime
+    else:
+        if decision(delta_E, T):
+            ret = x_prime
+        else:
+            ret = x
+    return ret
+
+#### HELPERS
+
+def compute_delta_E(x, x_prime, n=2):
+    delta_E = bump(x, n) - bump(x_prime, n)
 
     return delta_E
 
 
-def delta_E_acceptance(delta_E, T, x, x_prime):
-    if decision(delta_E, T):
-        ret = x_prime
-    else:
-        ret = x
-    return ret
-
-
 def decision(delta_E, T):
-    probability = delta_E / T
+    probability = np.exp(delta_E / T)
     return random.random() < probability
 
 
-def bump(x):
+def is_violate_constraints_bump(x, n=2):
+    return np.prod(x) < 0.75 or np.sum(x) > (15 * n / 2)
+
+
+def bump(x, n=2):
     """
     a funtion that returns the objective function given the design variable x
     :param x: design variable (nx1) column vector
     :return: objective function
     """
-    numerator = - np.abs(np.sum(np.power(np.cos(x), 4), axis=1) - 2 * np.prod(np.power(np.cos(x), 2), axis=1))
-    denominator = np.sqrt(np.sum(np.arange(1, len(x)) * np.pow(x, 2)))
-    return NotImplemented
+    a_large_number = 100
+
+    numerator = - np.abs(np.sum(np.power(np.cos(x), 4)) - 2 * np.prod(np.power(np.cos(x), 2)))
+    denominator = np.sqrt(np.sum(np.arange(1, len(x)+1) * np.power(x, 2)))
+    if is_violate_constraints_bump(x, n):
+        return numerator/denominator + a_large_number
+
+    return numerator/denominator
 
 
-def schedule(c, t, t_start = 1000):
+################### STRESS STUFF ####################
+
+
+def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
     """
-    returns the temperature based on the exponential cooling schedule T(t) = t_start where 0<c<1.
+    :param x0: initial guess
+    :param lb: vector lower bound
+    :param ub: vector upper bound
+    :param epsilon:  step-size controlling magnitude of perturbation to design variables
+    :param max_iter: maximum number of iterations
+    :param t_start: starting temperature
     :param c: cooling schedule parameter
-    :param t: temperature nx1 column vector
-    :param t_start: starting temperature nx1 column vector
     :return:
     """
-    T = t_start * np.power(c, t)
+    # initialize
+    iteration = 0
+    T = t_start
+    x, xopt = x0, x0
 
-    return T
+    while(iteration < max_iter):
+        x_prime = get_perturbed_values(x, lb, ub, epsilon)
+        # get_stress
+        x = delta_E_acceptance(T, x, x_prime, n)
+        if bump(x) < bump(xopt):
+            xopt = x
+        T = schedule(c, iteration, t_start)
+        print iteration
+        iteration += 1
 
+    fopt = bump(xopt, n)
+    return xopt, fopt
+
+
+def delta_E_acceptance_3(T, x, x_prime, n=2):
+    """
+    Generates a new x value
+    :param T:
+    :param x:
+    :param x_prime:
+    :param n:
+    :return:
+    """
+    delta_E = compute_delta_E(x, x_prime, n)
+
+    if delta_E > 0:
+        # accept move
+        ret = x_prime
+    else:
+        if decision(delta_E, T):
+            ret = x_prime
+        else:
+            ret = x
+    return ret
+
+
+def is_violate_constraints_stress(sigmas, n=2):
+    sigma_max = 270 # MegaPascal
+    print np.greater(sigmas, sigma_max)
+    return np.greater(sigmas, sigma_max)
 
 
 ###################################################################
 
-
-def penalty_function(x):
-    phi = 1
-    if(is_x_valid(x)):
-        phi = 0
-    return phi
+def get_weight(areas, lengths, density):
+    return areas * lengths * density
 
 
-def penalty_parameter(C, iteration_number):
-    alpha = 1.4-10
-    rho = np.power(C * iteration_number, alpha)
-    return rho
+def get_stress():
+    # INPUT FOR 10-bar truss
+    sample_connec = [[1, 2],
+                     [2, 3],
+                     [3, 6],
+                     [6, 5],
+                     [5, 4],
+                     [4, 2],
+                     [1, 5],
+                     [2, 5],
+                     [2, 6],
+                     [3, 5]]
 
+    nodal_coordinates = [[0, 1],
+                         [1, 1],
+                         [2, 1],
+                         [0, 0],
+                         [1, 0],
+                         [2, 0]]
 
-def objective_function_update(C, iteration_number, x):
-    """
-    Updates the original objective bump function
-    :param C:
-    :param iteration_number:
-    :param x:
-    :return:
-    """
-    rho = penalty_parameter(C, iteration_number)
-    f = bump(x) + rho * penalty_function(x)
-    return f
+    list_of_E = [70 * 10 ** 9] * 10
+    list_of_A = [1 * 10 ** -4] * 10
+    displacements = [0, 0, np.NAN, np.NAN, np.NAN, np.NAN, 0, 0, np.NAN, np.NAN, np.NAN,
+                     np.NAN]  # Use NAN for unknown boundary conditions
+    forces = [0, 0, 0, 0, 0, 0, 0, 0, 0, -100, 0, -100]
 
+    stress = truss.main_driver(sample_connec, nodal_coordinates, list_of_E, list_of_A, displacements, forces)
+    stress = np.array(stress)
+    return stress
 
-def is_x_valid(x):
-    """
-    return if x is valid or not.
-    :param x:
-    :return:
-    """
-    return NotImplemented
+###########################################################
+
 
 if __name__ == '__main__':
-    print move.move(np.array([0, 0]), np.array([-1, -1]), np.array([1, 1]), 5)
-    #x = np.array([1, 2, 3, 4, 5, 6 ,6, 234 ])
-    #lb = np.array([1, 2, 3, 4, 2, 0, 1, 2])
-    #ub = np.array([10, 10, 10, 10, 90, 234, 20, 700])
-    #move.move(x, lb, ub, 0.1)
-    #print move.move(x, lb, ub, 0.1)
+
+    ######################## Bump ######################
+    """
+    n = 2
+    sample_x = np.array([1, 1])
+    epsilon = 2
+    lb = np.array([0, 0])
+    ub = np.array([10, 10])
+    t_start = 1000
+    c = 0.99
+    a_large_number = 100
+    max_iter = 5000
+    xopt, fopt = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
+    print "xopt", xopt
+    print "fopt", fopt
+    """
+
+    ######################## 10-bar Truss ######################
+    n = 2 # dimensions
+    # Design variable is cross-sectional area. There are 10 of them -- list_of_A
+    x_areas = np.array([1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4,
+              1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4, 1 * 10 ** -4])
+    # Minimize the weight of the structure subject to stress constraints
+
+
+    ############## TRUSS STUFF  ###############
+
+
+
+    ######### GET WEIGHT ###########
+    list_of_L = truss.get_lengths(sample_connec, nodal_coordinates)
+    list_of_L = np.array(list_of_L)
+    density = 2700 # 6063 Aluminium alloy in kg/m
+    weights = get_weight(x_areas, list_of_L, density)
+
+
+    # Design Variable is Cross Section
+    # Objective is Weight ** Weight is just density * cross section * L
+
+
+    ###### BACK TO ASSIGN 3 ######
+    is_violate_constraints_stress(stress, n)
+
+
