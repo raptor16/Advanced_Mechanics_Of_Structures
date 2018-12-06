@@ -4,6 +4,7 @@ from Assignment3 import get_perturbed_values
 from Assignment3 import decision
 from Assignment3 import schedule
 from matplotlib import pyplot as plt
+from scipy import optimize as opt
 
 def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
     """
@@ -196,6 +197,20 @@ def plot_convergence(fopt, c):
     plt.show()
 
 
+########################################################################
+
+
+def bonus(x0_area):
+    sigma_max = 270 * 10 ** 6
+
+    fun = lambda x: get_weight(x)
+    cons = ({'type': 'ineq', 'fun': lambda x: sigma_max - get_stress(x)})
+    bnds = ((0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001))
+    #bnds = ((0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None))
+    return opt.minimize(fun, x0_area, constraints=cons, bounds=bnds)
+
+########################################################################
+
 
 if __name__ == '__main__':
 
@@ -216,9 +231,18 @@ if __name__ == '__main__':
     max_iter = 5000
     t_start = 1000
     c = 0.996
+
+
+    x_areas_list1 = [1.67962874e-06,  2.29641819e-07,  1.41070501e-07, 3.19882045e-07, 3.31579780e-07,
+         1.16674870e-06, 7.25534924e-08, 4.93178099e-07, 5.29934413e-07, 1.90177136e-07]
+    x_areas1 = np.array(x_areas_list1)
+    print bonus(x_areas1)
+
     #xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
     #print "fopt", fopt
     #print "xopt", xopt
+
+
 
     average_n = 5
     shape = (5000,)
@@ -231,3 +255,4 @@ if __name__ == '__main__':
     print "xopt", xopt
     print "fopt", fopt
     plot_convergence(average, c)
+
