@@ -159,10 +159,10 @@ def bump_func(x):
 def bonus(x0):
     fun = lambda x: (- np.abs(np.sum(np.power(np.cos(x), 4)) - 2 * np.prod(np.power(np.cos(x), 2)))) / \
                     (np.sqrt(np.sum(np.arange(1, len(x) + 1) * np.power(x, 2))))
-    cons = ({'type': 'ineq', 'fun': lambda x:  np.prod(x) - 0.75}, {'type': 'ineq', 'fun':
-        lambda x: (15 * n / 2) - np.sum(x)})
+    cons = ({'type': 'ineq', 'fun': lambda x:  0.75 - np.prod(x)}, {'type': 'ineq', 'fun':
+        lambda x: np.sum(x) - (15 * n / 2)})
     bnds = ((0, 10), (0, 10))
-    opt.minimize(fun, x0, bounds=bnds, constraints=cons)
+    return opt.minimize(fun, x0, bounds=bnds, constraints=cons)
 
 ########################################################################
 
@@ -183,6 +183,9 @@ if __name__ == '__main__':
     shape = (5000, )
     total_fopt_graph = np.zeros(shape)
 
+    sample_x1 = np.array([0.5, 0.5])
+    print bonus(sample_x1)
+
     for i in range(average_n):
         xopt, fopt, fopt_graph = SA(sample_x, lb, ub, epsilon, max_iter, t_start, c, n)
         total_fopt_graph += fopt_graph
@@ -191,7 +194,7 @@ if __name__ == '__main__':
     print "fopt", fopt
     plot_convergence(average, c)
 
-    print bonus(sample_x)
+
 
     """
     # Uncomment this block for the fopt vs c graph
