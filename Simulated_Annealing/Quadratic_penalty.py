@@ -4,54 +4,51 @@ from Assignment3 import get_perturbed_values
 from Assignment3 import decision
 from Assignment3 import schedule
 from matplotlib import pyplot as plt
-from scipy import optimize as opt
 
-def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2):
+def SA_3(x0, lb, ub, epsilon=2, max_iter=5000, t_start=1000, c=0.98, n=2, rho=1):
     """
     :param x0: initial guess
     :param lb: vector lower bound
     :param ub: vector upper bound
     :param epsilon:  step-size controlling magnitude of perturbation to design variables
     :param max_iter: maximum number of iterations
+    :param rho: the P parameter for penalty
     :param t_start: starting temperature
     :param c: cooling schedule parameter
-    :return: xopt is the optimized design variable values, fopt is the optimized objective function values,
-        evaluated objective function at x, primarily used for graphing
+    :return: Same as Assignment3.py
     """
     # initialize
     iteration = 0
     T = t_start
     x, xopt = x0, x0
-
-    shape = (5000, )
+    shape = (5000,)
     fopt_graph = np.empty(shape)
 
     while(iteration < max_iter):
         x_prime = get_perturbed_values(x, lb, ub, epsilon)
-        x = delta_E_acceptance(T, x, x_prime, n)
-
-        if (is_violate_constraints_stress(get_stress(x_areas)).all() == 0):
-            fopt_graph[iteration] = get_weight(x)
-        if get_weight(x) < get_weight(xopt):
+        x = delta_E_acceptance(T, x, x_prime, rho)
+        fopt_graph[iteration] = calculate_pi_func(x, rho)
+        if calculate_pi_func(x, rho) < calculate_pi_func(xopt, rho):
             xopt = x
+            fopt = calculate_pi_func(xopt, rho)
         T = schedule(c, iteration, t_start)
         print iteration
         iteration += 1
 
-    fopt = get_weight(xopt)
+    # fopt = calculate_pi_func(xopt)
     return xopt, fopt, fopt_graph
 
 
-def delta_E_acceptance(T, x, x_prime, n=2):
+def delta_E_acceptance(T, x, x_prime, rho):
     """
-    Generates a x value depending on if a move is accepted or rejected
-    :param T: caculated Temperature from cooling schedule function
-    :param x: the array of design variables
-    :param x_prime: the array of design variables perturbed
-    :param n: this is not necessary; it is the dimensions
-    :return: the design variable update based on the move
+    Same as Assignment3.py
+    :param T:
+    :param x:
+    :param x_prime:
+    :param n:
+    :return:
     """
-    delta_E = compute_delta_E(x, x_prime, n)
+    delta_E = compute_delta_E(x, x_prime, rho)
 
     if delta_E > 0:
         # accept move
@@ -64,23 +61,24 @@ def delta_E_acceptance(T, x, x_prime, n=2):
     return ret
 
 
-def compute_delta_E(x_areas, x_areas_prime, n=2):
+def compute_delta_E(x_areas, x_areas_prime, rho):
     """
-    Same as A1 except instead of bump the objective func is weight
-    :param x_areas:
-    :param x_areas_prime:
-    :param n:
-    :return: deltaE
+    Same as Assignment3_part3.py except it uses the pi function which is the updated objective function given a
+     quadratic penaty
+    :param x_areas: array of areas
+    :param x_areas_prime: array of areas perturbed
+    :param rho: the P parameter
+    :return:
     """
-    delta_E = get_weight(x_areas) - get_weight(x_areas_prime)
+    delta_E = calculate_pi_func(x_areas, rho) - calculate_pi_func(x_areas_prime, rho)
     return delta_E
 
 
 def is_violate_constraints_stress(sigmas):
     """
-    checks if constrainsts are violated
-    :param sigmas: array of stresses on each element
-    :return: array of values to be added as penalty if there is a violation of constraint
+    check if any stress constraints are violated
+    :param sigmas: array of stress
+    :return: array of values for penalty for each element
     """
     sigma_max = 270 * 10**6 # Newton per Meter Square
     a_large_number = 100
@@ -92,27 +90,24 @@ def is_violate_constraints_stress(sigmas):
 def get_weight(areas):
     """
     Gets the objective function with the added ONE penalty
-    :param areas: array of areas
-    :return: evaluated objective function at x (area) with the added ONE penalty
+    :param areas: np array of areas
+    :return: total weight scalar of the truss
     """
     lengths = get_lengths()
     density = 2700 # 6061 Aluminium alloy in kg/m3
     weights = areas * lengths * density
-    # a_large_number = 100
-
-    stress = get_stress(areas)
-    #if is_violate_constraints_stress(stress):
-    #    weights += a_large_number
-    weights = weights + is_violate_constraints_stress(stress)
+    # stress = get_stress(areas)
+    # weights = weights + is_violate_constraints_stress(stress)
     total_weight = np.sum(weights)
+
     return total_weight
 
 
 def get_stress(list_of_A):
     """
-    gets stress from A1
-    :param list_of_A: list of areas of each element
-    :return: stress array
+    Gets the stress from the truss solver in A1
+    :param list_of_A: list of areas
+    :return: stress in N/m^2
     """
     # INPUT FOR 10-bar truss
     sample_connec = [[1, 2],
@@ -146,6 +141,10 @@ def get_stress(list_of_A):
 
 
 def get_lengths():
+    """
+    get length of each element
+    :return: length list of each element
+    """
     sample_connec = [[1, 2],
                      [2, 3],
                      [3, 6],
@@ -170,12 +169,56 @@ def get_lengths():
 
 ###########################################################
 
+def quadratic_penalty(sigmas):
+    """
+
+    :param sigmas: stress vector
+    :return: penalty function
+    """
+    # h(x) is 0 because there are no equality constraints.
+    # g(x) is the inequality constraint g(x) <= 0. In this case, sigma(x) - sigma_max
+
+    sigma_max = 270 * 10**6 # Newton per Meter Square
+
+    zeros = np.zeros(sigmas.shape)
+    g_of_x = sigmas - sigma_max
+
+    phi = np.sum(np.power(np.maximum(zeros, g_of_x), 2))
+
+    return phi
+
+"""
+def calculate_rho_scalar(iteration, C=0.5, alpha=1.5):
+    rho = np.power(C * iteration, alpha)
+    return rho
+"""
+
+
+def calculate_pi_func(x_areas, rho):
+    """
+    Calculates the updated objective function
+    :param x_areas: design variable - area
+    :param rho: P parameter
+    :return: updated objective function
+    """
+    alpha = 1.5
+    C = 0.5
+    # rho = calculate_rho_scalar(iteration, C, alpha)
+
+    sigmas = get_stress(x_areas)
+    phi = quadratic_penalty(sigmas)
+
+    obj_func = get_weight(x_areas)
+    pi = obj_func + rho * phi
+    return pi
+
+
 def plot_convergence(fopt, c):
     """
-    plots the convergence in a semilogy and normal axis
-    :param fopt: y axis optimized weight
-    :param c: label for the c parameter used
-    :return: None
+    helper function for plotting the convergence of fopt
+    :param fopt: y axis being plotted
+    :param c: used for labeling the graph, this is the cooling schedule parameter
+    :return: Nothing
     """
     num_of_iterations = 5000
     x = np.linspace(1, num_of_iterations, 5000)
@@ -196,22 +239,6 @@ def plot_convergence(fopt, c):
     plt.legend()
     plt.show()
 
-
-########################################################################
-
-
-def bonus(x0_area):
-    sigma_max = 270 * 10 ** 6
-
-    fun = lambda x: get_weight(x)
-    cons = ({'type': 'ineq', 'fun': lambda x: sigma_max - get_stress(x)})
-    bnds = ((0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001), (0, 0.0001))
-    #bnds = ((0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None), (0, None))
-    return opt.minimize(fun, x0_area, constraints=cons, bounds=bnds)
-
-########################################################################
-
-
 if __name__ == '__main__':
 
     ######################## 10-bar Truss ######################
@@ -227,32 +254,19 @@ if __name__ == '__main__':
     ub_list = [0.0001] * 10
     lb = np.array(lb_list)
     ub = np.array(ub_list)
-    epsilon = 0.2 * ub[0]
+    epsilon = 0.3 * ub[0]
     max_iter = 5000
     t_start = 1000
     c = 0.996
-
-
-    x_areas_list1 = [1.67962874e-06,  2.29641819e-07,  1.41070501e-07, 3.19882045e-07, 3.31579780e-07,
-         1.16674870e-06, 7.25534924e-08, 4.93178099e-07, 5.29934413e-07, 1.90177136e-07]
-    x_areas1 = np.array(x_areas_list1)
-    print bonus(x_areas1)
-
-    #xopt, fopt = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
-    #print "fopt", fopt
-    #print "xopt", xopt
-
-
-
     average_n = 5
     shape = (5000,)
     total_fopt_graph = np.zeros(shape)
 
+    rho = 1
     for i in range(average_n):
-        xopt, fopt, fopt_graph = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n)
+        xopt, fopt, fopt_graph = SA_3(x_areas, lb, ub, epsilon, max_iter, t_start, c, n, rho)
         total_fopt_graph += fopt_graph
     average = total_fopt_graph / average_n
     print "xopt", xopt
     print "fopt", fopt
     plot_convergence(average, c)
-
