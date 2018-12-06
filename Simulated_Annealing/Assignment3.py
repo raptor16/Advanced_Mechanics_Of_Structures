@@ -153,12 +153,12 @@ def plot_convergence(fopt, c):
 ########################################################################
 
 def bump_func(x):
-    return
+    return (- np.abs(np.sum(np.power(np.cos(x), 4)) - 2 * np.prod(np.power(np.cos(x), 2)))) / \
+                    (np.sqrt(np.sum(np.arange(1, len(x) + 1) * np.power(x, 2))))
 
 
 def bonus(x0):
-    fun = lambda x: (- np.abs(np.sum(np.power(np.cos(x), 4)) - 2 * np.prod(np.power(np.cos(x), 2)))) / \
-                    (np.sqrt(np.sum(np.arange(1, len(x) + 1) * np.power(x, 2))))
+    fun = lambda x: bump_func(x)
     cons = ({'type': 'ineq', 'fun': lambda x:  0.75 - np.prod(x)}, {'type': 'ineq', 'fun':
         lambda x: np.sum(x) - (15 * n / 2)})
     bnds = ((0, 10), (0, 10))
@@ -193,8 +193,6 @@ if __name__ == '__main__':
     print "xopt", xopt
     print "fopt", fopt
     plot_convergence(average, c)
-
-
 
     """
     # Uncomment this block for the fopt vs c graph
