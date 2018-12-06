@@ -2,7 +2,7 @@ import move
 import numpy as np
 import random
 from matplotlib import pyplot as plt
-import scipy
+from scipy import optimize as opt
 
 def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
     """
@@ -152,10 +152,17 @@ def plot_convergence(fopt, c):
 
 ########################################################################
 
+def bump_func(x):
+    return
+
 
 def bonus(x0):
-    scipy.optimize.minimize(bump, x0, x0)
-
+    fun = lambda x: (- np.abs(np.sum(np.power(np.cos(x), 4)) - 2 * np.prod(np.power(np.cos(x), 2)))) / \
+                    (np.sqrt(np.sum(np.arange(1, len(x) + 1) * np.power(x, 2))))
+    cons = ({'type': 'ineq', 'fun': lambda x:  np.prod(x) - 0.75}, {'type': 'ineq', 'fun':
+        lambda x: (15 * n / 2) - np.sum(x)})
+    bnds = ((0, 10), (0, 10))
+    opt.minimize(fun, x0, bounds=bnds, constraints=cons)
 
 ########################################################################
 
@@ -171,6 +178,7 @@ if __name__ == '__main__':
     a_large_number = 100
     max_iter = 5000
 
+    print bonus(sample_x)
 
     average_n = 5
     shape = (5000, )
