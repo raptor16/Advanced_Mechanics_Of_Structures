@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="43f9d908-2a58-4f24-bd05-52e1fbf3b516" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/AER310_lec6.docx" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/AER501_results.docx" beforeDir="false" afterPath="$PROJECT_DIR$/AER501_results.docx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Assignment3.py" beforeDir="false" afterPath="$PROJECT_DIR$/Assignment3.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/garbge.py" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -23,23 +25,23 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
-          <entry key="py" value="240" />
+          <entry key="py" value="241" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="PLAIN_TEXT" value="3" />
-          <entry key="Python" value="237" />
+          <entry key="Python" value="238" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="py" value="13700" />
+          <entry key="py" value="13710" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="13700" />
+          <entry key="Python" value="13710" />
         </counts>
       </usages-collector>
     </session>
@@ -49,12 +51,11 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Assignment3.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="302">
-              <caret line="195" column="4" selection-start-line="195" selection-start-column="4" selection-end-line="195" selection-end-column="4" />
+            <state relative-caret-position="339">
+              <caret line="194" lean-forward="true" selection-start-line="194" selection-end-line="194" />
               <folding>
                 <element signature="e#0#11#0" expanded="true" />
-                <marker date="1544056347536" expanded="true" signature="4661:4675" ph="..." />
-                <marker date="1544056347536" expanded="true" signature="4941:5175" ph="..." />
+                <marker date="1544056515731" expanded="true" signature="4661:4675" ph="..." />
               </folding>
             </state>
           </provider>
@@ -71,7 +72,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>100</find>
       <find>print</find>
       <find>ub</find>
       <find>get_perturbed_values</find>
@@ -101,6 +101,7 @@
       <find>bump</find>
       <find>sci</find>
       <find>bonus</find>
+      <find>np.empty</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -122,7 +123,7 @@
     <option name="x" value="840" />
     <option name="y" value="23" />
     <option name="width" value="840" />
-    <option name="height" value="955" />
+    <option name="height" value="953" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -265,16 +266,16 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="840" y="23" width="840" height="955" extended-state="0" />
+    <frame x="840" y="23" width="840" height="953" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.25689223" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.25689223" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32857144" />
-      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.42619047" />
-      <window_info anchor="bottom" id="Debug" order="3" weight="0.35" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.42601433" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.349642" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3297619" />
@@ -352,12 +353,11 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Assignment3.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="302">
-          <caret line="195" column="4" selection-start-line="195" selection-start-column="4" selection-end-line="195" selection-end-column="4" />
+        <state relative-caret-position="339">
+          <caret line="194" lean-forward="true" selection-start-line="194" selection-end-line="194" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
-            <marker date="1544056347536" expanded="true" signature="4661:4675" ph="..." />
-            <marker date="1544056347536" expanded="true" signature="4941:5175" ph="..." />
+            <marker date="1544056515731" expanded="true" signature="4661:4675" ph="..." />
           </folding>
         </state>
       </provider>

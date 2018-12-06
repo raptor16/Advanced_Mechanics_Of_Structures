@@ -21,7 +21,7 @@ def SA(x0, lb, ub, epsilon=3, max_iter=5000, t_start=1000, c=0.99, n=2):
     T = t_start
     x, xopt = x0, x0
     shape = (5000, )
-    fopt_graph = np.empty(shape)
+    fopt_graph = np.zeros(shape)
 
     while(iteration < max_iter):
         x_prime = get_perturbed_values(x, lb, ub, epsilon)
@@ -174,11 +174,10 @@ if __name__ == '__main__':
     lb = np.array([0., 0.])
     ub = np.array([10., 10.])
     t_start = 1000
-    c = 0.996
+    c = 0.98
     a_large_number = 100
     max_iter = 5000
 
-    print bonus(sample_x)
 
     average_n = 5
     shape = (5000, )
@@ -192,6 +191,7 @@ if __name__ == '__main__':
     print "fopt", fopt
     plot_convergence(average, c)
 
+    print bonus(sample_x)
 
     """
     # Uncomment this block for the fopt vs c graph
